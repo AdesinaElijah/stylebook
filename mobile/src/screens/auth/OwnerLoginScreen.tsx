@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Animated, Easing,
+  Platform, ScrollView, Animated, Easing, Image,
 } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, Ellipse, Line, Path, Rect } from 'react-native-svg';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -19,59 +19,12 @@ const PLANS = [
 ];
 const CATEGORIES = ['SALON', 'BARBERSHOP', 'SPA', 'NAILS'];
 
-function Sparkle({ x, y, s, color }: { x: number; y: number; s: number; color: string }) {
-  return (
-    <Path
-      d={`M ${x} ${y - s} L ${x + s * 0.3} ${y - s * 0.3} L ${x + s} ${y} L ${x + s * 0.3} ${y + s * 0.3} L ${x} ${y + s} L ${x - s * 0.3} ${y + s * 0.3} L ${x - s} ${y} L ${x - s * 0.3} ${y - s * 0.3} Z`}
-      fill={color}
-    />
-  );
-}
-
-function BarberIllustration({ gold, ink, surface }: { gold: string; ink: string; surface: string }) {
-  return (
-    <Svg width="100%" height={170} viewBox="0 0 400 200">
-      <Defs>
-        <ClipPath id="poleClip">
-          <Rect x={300} y={58} width={22} height={86} rx={11} />
-        </ClipPath>
-      </Defs>
-      <Ellipse cx={200} cy={110} rx={170} ry={80} fill={gold} opacity={0.1} />
-      <Rect x={172} y={48} width={56} height={58} rx={12} fill={surface} stroke={gold} strokeWidth={4} />
-      <Line x1={186} y1={64} x2={214} y2={64} stroke={gold} strokeWidth={2} opacity={0.5} />
-      <Line x1={186} y1={76} x2={214} y2={76} stroke={gold} strokeWidth={2} opacity={0.5} />
-      <Rect x={158} y={104} width={84} height={18} rx={9} fill={gold} />
-      <Rect x={148} y={88} width={12} height={30} rx={6} fill={surface} stroke={ink} strokeWidth={3} />
-      <Rect x={240} y={88} width={12} height={30} rx={6} fill={surface} stroke={ink} strokeWidth={3} />
-      <Rect x={195} y={122} width={10} height={30} rx={4} fill={ink} />
-      <Rect x={172} y={152} width={56} height={8} rx={4} fill={gold} />
-      <Rect x={88} y={72} width={30} height={58} rx={10} fill={surface} stroke={ink} strokeWidth={4} />
-      <Rect x={92} y={58} width={22} height={14} rx={3} fill={ink} />
-      <Line x1={95} y1={58} x2={95} y2={52} stroke={ink} strokeWidth={2.5} strokeLinecap="round" />
-      <Line x1={103} y1={58} x2={103} y2={52} stroke={ink} strokeWidth={2.5} strokeLinecap="round" />
-      <Line x1={111} y1={58} x2={111} y2={52} stroke={ink} strokeWidth={2.5} strokeLinecap="round" />
-      <Circle cx={103} cy={100} r={5} fill={gold} />
-      <Line x1={70} y1={48} x2={78} y2={54} stroke={gold} strokeWidth={3} strokeLinecap="round" />
-      <Line x1={62} y1={62} x2={72} y2={64} stroke={gold} strokeWidth={3} strokeLinecap="round" />
-      <Rect x={300} y={58} width={22} height={86} rx={11} fill={surface} stroke={gold} strokeWidth={3} />
-      <Line x1={292} y1={72} x2={330} y2={94} stroke={gold} strokeWidth={7} clipPath="url(#poleClip)" />
-      <Line x1={292} y1={94} x2={330} y2={116} stroke={ink} strokeWidth={7} clipPath="url(#poleClip)" />
-      <Line x1={292} y1={116} x2={330} y2={138} stroke={gold} strokeWidth={7} clipPath="url(#poleClip)" />
-      <Circle cx={311} cy={52} r={7} fill={gold} />
-      <Circle cx={311} cy={150} r={7} fill={gold} />
-      <Sparkle x={62} y={150} s={7} color={gold} />
-      <Sparkle x={348} y={36} s={8} color={gold} />
-      <Sparkle x={152} y={26} s={5} color={gold} />
-      <Sparkle x={262} y={30} s={6} color={gold} />
-    </Svg>
-  );
-}
-
 export default function OwnerLoginScreen({ navigation }: any) {
   const { login } = useAuth();
   const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '', password: '',
     shopName: '', category: 'SALON', city: '',
@@ -191,8 +144,14 @@ export default function OwnerLoginScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
-            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 8 }}>
-              <BarberIllustration gold={theme.accent} ink={theme.text} surface={theme.surface} />
+            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 8, alignItems: 'center' }}>
+              <View style={[styles.imageFrame, { backgroundColor: theme.surface }]}> 
+                <Image
+                  source={require('../../../assets/Screenshot 2026-07-24 162601.png')}
+                  resizeMode="cover"
+                  style={styles.loginImage}
+                />
+              </View>
             </Animated.View>
 
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
@@ -327,14 +286,24 @@ export default function OwnerLoginScreen({ navigation }: any) {
                   />
 
                   <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: theme.surface, color: theme.text, borderColor: theme.border }]}
-                    placeholder="••••••••"
-                    placeholderTextColor={theme.textTertiary}
-                    value={form.password}
-                    onChangeText={(v) => setForm({ ...form, password: v })}
-                    secureTextEntry
-                  />
+                  <View style={[styles.passwordRow, { borderColor: theme.border, backgroundColor: theme.surface }]}> 
+                    <TextInput
+                      style={[styles.input, styles.passwordInput, { color: theme.text }]}
+                      placeholder="••••••••"
+                      placeholderTextColor={theme.textTertiary}
+                      value={form.password}
+                      onChangeText={(v) => setForm({ ...form, password: v })}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} style={styles.passwordIcon}>
+                      <Ionicons
+                        name={showPassword ? 'eye-off' : 'eye'}
+                        size={22}
+                        color={theme.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
                     <Text style={[styles.forgotText, { color: theme.accent }]}>Forgot password?</Text>
@@ -401,4 +370,39 @@ const styles = StyleSheet.create({
   choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
   choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
   forgotText: { fontSize: 13, fontWeight: '600' },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    marginTop: 4,
+    borderColor: 'red', // This will be overridden by theme.border
+    backgroundColor: 'red', // This will be overridden by theme.surface
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 0,
+    margin: 0,
+    fontSize: 16,
+    minHeight: 48,
+  },
+  passwordIcon: {
+    marginLeft: 12,
+  },  imageFrame: {
+    width: 350,
+    height: 220,
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  loginImage: {
+    width: '100%',
+    height: '100%',
+  },
 });

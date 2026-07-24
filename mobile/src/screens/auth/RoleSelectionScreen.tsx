@@ -133,8 +133,8 @@ export default function RoleSelectionScreen({ navigation }: any) {
     });
   };
 
-  // TODO: swap these for your actual filenames from `dir assets\*.jpg`
-  const customerPhoto = require('../../../assets/photo_2026-07-17_11-22-10.jpg');
+  // TODO: swap these for your actual filenames from `dir assets\*.png`
+  const customerPhoto = require('../../../assets/photo_2026-07-17_11-22-10.png');
   const ownerPhoto = require('../../../assets/photo_2026-07-17_11-22-29.jpg');
 
   return (

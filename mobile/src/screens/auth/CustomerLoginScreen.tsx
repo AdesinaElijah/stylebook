@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Animated, Easing, ImageBackground,
+  Platform, ScrollView, Animated, Easing, Image,
 } from 'react-native';
-import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,47 +12,12 @@ import ThemedScreen from '../../components/ThemedScreen';
 
 type Mode = 'choice' | 'login' | 'signup';
 
-function Sparkle({ x, y, s, color }: { x: number; y: number; s: number; color: string }) {
-  return (
-    <Path
-      d={`M ${x} ${y - s} L ${x + s * 0.3} ${y - s * 0.3} L ${x + s} ${y} L ${x + s * 0.3} ${y + s * 0.3} L ${x} ${y + s} L ${x - s * 0.3} ${y + s * 0.3} L ${x - s} ${y} L ${x - s * 0.3} ${y - s * 0.3} Z`}
-      fill={color}
-    />
-  );
-}
-
-function SalonIllustration({ gold, ink, surface }: { gold: string; ink: string; surface: string }) {
-  return (
-    <Svg width="100%" height={170} viewBox="0 0 400 200">
-      <Ellipse cx={200} cy={110} rx={170} ry={80} fill={gold} opacity={0.1} />
-      <Circle cx={200} cy={90} r={58} fill={surface} stroke={gold} strokeWidth={4} />
-      <Circle cx={200} cy={90} r={46} stroke={gold} strokeWidth={1} opacity={0.35} />
-      <Path d="M 172 62 Q 186 50 204 52" stroke={gold} strokeWidth={3} strokeLinecap="round" opacity={0.6} fill="none" />
-      <Rect x={196} y={148} width={8} height={22} rx={3} fill={gold} />
-      <Rect x={176} y={170} width={48} height={7} rx={3.5} fill={gold} />
-      <Line x1={92} y1={58} x2={134} y2={122} stroke={ink} strokeWidth={4} strokeLinecap="round" />
-      <Line x1={134} y1={58} x2={92} y2={122} stroke={ink} strokeWidth={4} strokeLinecap="round" />
-      <Circle cx={88} cy={130} r={9} stroke={ink} strokeWidth={4} fill="none" />
-      <Circle cx={138} cy={130} r={9} stroke={ink} strokeWidth={4} fill="none" />
-      <Circle cx={113} cy={90} r={4} fill={gold} />
-      <Rect x={294} y={62} width={12} height={78} rx={5} fill={gold} />
-      <Line x1={306} y1={74} x2={326} y2={74} stroke={gold} strokeWidth={4} strokeLinecap="round" />
-      <Line x1={306} y1={90} x2={326} y2={90} stroke={gold} strokeWidth={4} strokeLinecap="round" />
-      <Line x1={306} y1={106} x2={326} y2={106} stroke={gold} strokeWidth={4} strokeLinecap="round" />
-      <Line x1={306} y1={122} x2={326} y2={122} stroke={gold} strokeWidth={4} strokeLinecap="round" />
-      <Sparkle x={62} y={40} s={9} color={gold} />
-      <Sparkle x={340} y={34} s={7} color={gold} />
-      <Sparkle x={158} y={22} s={5} color={gold} />
-      <Sparkle x={262} y={160} s={6} color={gold} />
-    </Svg>
-  );
-}
-
 export default function CustomerLoginScreen({ navigation }: any) {
   const { login } = useAuth();
   const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '', password: '',
   });
@@ -169,17 +134,17 @@ export default function CustomerLoginScreen({ navigation }: any) {
             <Text style={[styles.backText, { color: theme.accent }]}>← Back</Text>
           </TouchableOpacity>
 
-          <ImageBackground
-            source={require('../../../assets/onboarding1.png')}
-            style={styles.headerImage}
-            imageStyle={styles.headerImageInner}
-          >
-            {/* decorative center icon could go here */}
-          </ImageBackground>
-
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
-            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 8 }}>
-              <SalonIllustration gold={theme.accent} ink={theme.text} surface={theme.surface} />
+            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 16 }}>
+              <View style={[styles.heroFrame, { backgroundColor: theme.surface, borderColor: theme.accent }]}> 
+                <Image
+                  source={require('../../../assets/tile-merchant-ireland-g2u8gq5XcwE-unsplash.jpg')}
+                  style={styles.heroImage}
+                  resizeMode="contain"
+                />
+                <View style={[styles.heroAccentBar, { backgroundColor: theme.accent }]} />
+                <View style={[styles.heroDot, { backgroundColor: theme.accent }]} />
+              </View>
             </Animated.View>
 
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
@@ -251,14 +216,24 @@ export default function CustomerLoginScreen({ navigation }: any) {
                   />
 
                   <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: theme.surface, color: theme.text, borderColor: theme.border }]}
-                    placeholder="••••••••"
-                    placeholderTextColor={theme.textTertiary}
-                    value={form.password}
-                    onChangeText={(v) => setForm({ ...form, password: v })}
-                    secureTextEntry
-                  />
+                  <View style={[styles.passwordRow, { borderColor: theme.border, backgroundColor: theme.surface }]}> 
+                    <TextInput
+                      style={[styles.input, styles.passwordInput, { color: theme.text }]}
+                      placeholder="••••••••"
+                      placeholderTextColor={theme.textTertiary}
+                      value={form.password}
+                      onChangeText={(v) => setForm({ ...form, password: v })}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)} style={styles.passwordIcon}>
+                      <Ionicons
+                        name={showPassword ? 'eye-off' : 'eye'}
+                        size={22}
+                        color={theme.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
                     <Text style={[styles.forgotText, { color: theme.accent }]}>Forgot password?</Text>
@@ -301,14 +276,31 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   scroll: { padding: 24, paddingTop: 60, paddingBottom: 40 },
-  headerImage: { width: '100%', height: 240, marginBottom: -36 },
-  headerImageInner: { borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   back: { marginBottom: 12 },
   backText: { fontSize: 16 },
   title: { fontSize: 30, fontWeight: '800', marginBottom: 4 },
   subtitle: { fontSize: 15, marginBottom: 28 },
   label: { fontSize: 13, marginBottom: 8, marginTop: 16 },
   input: { borderRadius: 12, padding: 16, fontSize: 16, borderWidth: 1 },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    marginTop: 4,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 0,
+    margin: 0,
+    fontSize: 16,
+    minHeight: 48,
+  },
+  passwordIcon: {
+    marginLeft: 12,
+  },
   button: { borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 32 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '700' },
   toggle: { alignItems: 'center', marginTop: 24 },
@@ -318,5 +310,34 @@ const styles = StyleSheet.create({
   choiceBtnOutline: { borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 14, borderWidth: 1.5 },
   choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
   choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
+  heroFrame: {
+    width: '100%',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 28,
+    elevation: 8,
+  },
+  heroImage: { width: '100%', height: 220 },
+  heroAccentBar: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    width: 60,
+    height: 6,
+    borderRadius: 3,
+  },
+  heroDot: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    opacity: 0.95,
+  },
   forgotText: { fontSize: 13, fontWeight: '600' },
 });
