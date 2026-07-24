@@ -336,6 +336,10 @@ export default function OwnerLoginScreen({ navigation }: any) {
                     secureTextEntry
                   />
 
+                  <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
+                    <Text style={[styles.forgotText, { color: theme.accent }]}>Forgot password?</Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.accent }]}
                     onPress={handleSubmit}
@@ -396,4 +400,5 @@ const styles = StyleSheet.create({
   choiceBtnOutline: { borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 14, borderWidth: 1.5 },
   choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
   choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
+  forgotText: { fontSize: 13, fontWeight: '600' },
 });

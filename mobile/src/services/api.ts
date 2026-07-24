@@ -19,6 +19,7 @@ export const authAPI = {
   login: (data: any) => api.post('/auth/login', data),
   verifyOtp: (data: any) => api.post('/auth/verify-otp', data),
   resendOtp: (data: any) => api.post('/auth/resend-otp', data),
+  forgotPassword: (data: any) => api.post('/auth/forgot-password', data),
 };
 export const shopsAPI = {
   getAll: (query?: string, category?: string) => api.get('/shops', { params: { query, category } }),
