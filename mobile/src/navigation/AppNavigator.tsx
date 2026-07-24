@@ -12,6 +12,8 @@ import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import CustomerLoginScreen from '../screens/auth/CustomerLoginScreen';
 import OwnerLoginScreen from '../screens/auth/OwnerLoginScreen';
 import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 // Customer Screens
 import HomeScreen from '../screens/customer/HomeScreen';
 import ShopProfileScreen from '../screens/customer/ShopProfileScreen';
@@ -153,12 +155,14 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={!user ? 'Onboarding' : undefined}>
         {!user ? (
           <>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
             <Stack.Screen name="CustomerLogin" component={CustomerLoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="OwnerLogin" component={OwnerLoginScreen} />
             <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
           </>

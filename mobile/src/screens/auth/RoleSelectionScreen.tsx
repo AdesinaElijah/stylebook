@@ -1,59 +1,74 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions,
+  View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions, Image,
 } from 'react-native';
-import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
 
 const { width } = Dimensions.get('window');
 
-function Sparkle({ x, y, s, color }: { x: number; y: number; s: number; color: string }) {
+function CustomerIcon({ ink }: { ink: string }) {
   return (
-    <Path
-      d={`M ${x} ${y - s} L ${x + s * 0.3} ${y - s * 0.3} L ${x + s} ${y} L ${x + s * 0.3} ${y + s * 0.3} L ${x} ${y + s} L ${x - s * 0.3} ${y + s * 0.3} L ${x - s} ${y} L ${x - s * 0.3} ${y - s * 0.3} Z`}
-      fill={color}
-    />
-  );
-}
-
-function CustomerArt({ gold, ink, surface }: { gold: string; ink: string; surface: string }) {
-  return (
-    <Svg width={110} height={90} viewBox="0 0 110 90">
-      <Circle cx={55} cy={40} r={30} fill={surface} stroke={gold} strokeWidth={3} />
-      <Path d="M 40 26 Q 48 18 58 20" stroke={gold} strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.6} />
-      <Rect x={52} y={70} width={6} height={12} rx={3} fill={gold} />
-      <Rect x={40} y={82} width={30} height={5} rx={2.5} fill={gold} />
-      <Line x1={12} y1={20} x2={30} y2={48} stroke={ink} strokeWidth={3} strokeLinecap="round" />
-      <Line x1={30} y1={20} x2={12} y2={48} stroke={ink} strokeWidth={3} strokeLinecap="round" />
-      <Circle cx={10} cy={52} r={5} stroke={ink} strokeWidth={3} fill="none" />
-      <Circle cx={32} cy={52} r={5} stroke={ink} strokeWidth={3} fill="none" />
-      <Sparkle x={95} y={18} s={6} color={gold} />
-      <Sparkle x={88} y={60} s={4} color={gold} />
+    <Svg width={26} height={22} viewBox="0 0 26 22">
+      <Line x1={2} y1={2} x2={14} y2={14} stroke={ink} strokeWidth={2.2} strokeLinecap="round" />
+      <Line x1={14} y1={2} x2={2} y2={14} stroke={ink} strokeWidth={2.2} strokeLinecap="round" />
+      <Circle cx={2} cy={17} r={3.2} stroke={ink} strokeWidth={2.2} fill="none" />
+      <Circle cx={14} cy={17} r={3.2} stroke={ink} strokeWidth={2.2} fill="none" />
+      <Circle cx={21} cy={7} r={6} stroke={ink} strokeWidth={2} fill="none" />
+      <Rect x={19.5} y={16} width={3} height={5} rx={1.5} fill={ink} />
     </Svg>
   );
 }
 
-function OwnerArt({ gold, ink, surface }: { gold: string; ink: string; surface: string }) {
+function OwnerIcon({ ink }: { ink: string }) {
   return (
-    <Svg width={110} height={90} viewBox="0 0 110 90">
-      {/* barber pole */}
-      <Rect x={20} y={14} width={14} height={56} rx={7} fill={surface} stroke={gold} strokeWidth={2.5} />
-      <Line x1={14} y1={26} x2={40} y2={40} stroke={gold} strokeWidth={5} />
-      <Line x1={14} y1={42} x2={40} y2={56} stroke={ink} strokeWidth={5} />
-      <Circle cx={27} cy={10} r={5} fill={gold} />
-      <Circle cx={27} cy={74} r={5} fill={gold} />
-      {/* clippers */}
-      <Rect x={62} y={28} width={22} height={42} rx={8} fill={surface} stroke={ink} strokeWidth={3} />
-      <Rect x={65} y={18} width={16} height={10} rx={2} fill={ink} />
-      <Circle cx={73} cy={48} r={4} fill={gold} />
-      <Line x1={92} y1={12} x2={98} y2={17} stroke={gold} strokeWidth={2.5} strokeLinecap="round" />
-      <Line x1={98} y1={26} x2={105} y2={28} stroke={gold} strokeWidth={2.5} strokeLinecap="round" />
-      <Sparkle x={98} y={64} s={5} color={gold} />
+    <Svg width={26} height={22} viewBox="0 0 26 22">
+      <Rect x={2} y={2} width={9} height={18} rx={4.5} stroke={ink} strokeWidth={2} fill="none" />
+      <Line x1={0} y1={7} x2={13} y2={13} stroke={ink} strokeWidth={2.4} />
+      <Line x1={0} y1={13} x2={13} y2={7} stroke={ink} strokeWidth={2.4} />
+      <Rect x={16} y={5} width={8} height={14} rx={2.5} stroke={ink} strokeWidth={2} fill="none" />
+      <Circle cx={20} cy={12} r={1.6} fill={ink} />
     </Svg>
   );
 }
 
+interface RoleCardProps {
+  photo: any;
+  title: string;
+  desc: string;
+  translateX: Animated.Value;
+  scale: Animated.Value;
+  onPress: () => void;
+  icon: React.ReactNode;
+  accent: string;
+  cream: string;
+  ink: string;
+}
+
+function RoleCard({ photo, title, desc, translateX, scale, onPress, icon, accent, cream, ink }: RoleCardProps) {
+  return (
+    <Animated.View style={{ transform: [{ translateX }, { scale }] }}>
+      <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.card, { borderColor: accent }]}>
+        <Image source={photo} style={styles.cardPhoto} resizeMode="cover" />
+        <View style={[styles.photoOverlay, { backgroundColor: 'rgba(20,16,9,0.28)' }]} />
+
+        <View style={[styles.badge, { backgroundColor: cream, borderColor: accent }]}>
+          {icon}
+        </View>
+
+        <View style={styles.cardTextWrap}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <Text style={styles.cardDesc}>{desc}</Text>
+        </View>
+
+        <View style={[styles.arrowCircle, { backgroundColor: accent }]}>
+          <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+        </View>
+      </TouchableOpacity>
+    </Animated.View>  );
+}
 export default function RoleSelectionScreen({ navigation }: any) {
   const { theme } = useTheme();
 
@@ -93,6 +108,7 @@ export default function RoleSelectionScreen({ navigation }: any) {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', playEntrance);
+    playEntrance();
     return unsubscribe;
   }, [navigation]);
 
@@ -117,62 +133,64 @@ export default function RoleSelectionScreen({ navigation }: any) {
     });
   };
 
+  // TODO: swap these for your actual filenames from `dir assets\*.jpg`
+  const customerPhoto = require('../../../assets/photo_2026-07-17_11-22-10.jpg');
+  const ownerPhoto = require('../../../assets/photo_2026-07-17_11-22-29.jpg');
+
   return (
     <ThemedScreen>
       <Animated.View style={[styles.container, { opacity: screenFade }]}>
-        {/* header */}
         <View style={styles.header}>
           <Animated.View
             style={[
               styles.blob,
-              { backgroundColor: theme.accent, opacity: 0.14, transform: [{ scale: blob }] },
+              { backgroundColor: theme.accent, opacity: 0.12, transform: [{ scale: blob }] },
             ]}
           />
           <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }], alignItems: 'center' }}>
-            <Text style={[styles.brand, { color: theme.text }]}>
-              Style<Text style={{ color: theme.accent }}>Book</Text>
-            </Text>
-            <Text style={[styles.tagline, { color: theme.textSecondary }]}>
-              Book your next look in seconds
+            <Text style={[styles.title, { color: theme.text }]}>Who are you?</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+              We'll personalize your experience to match your needs.
             </Text>
           </Animated.View>
         </View>
 
-        {/* role cards */}
         <View style={styles.cards}>
-          <Animated.View style={{ flex: 1, transform: [{ translateX: customerX }, { scale: customerScale }] }}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.accent }]}
-              onPress={() => choose('customer')}
-            >
-              <CustomerArt gold={theme.accent} ink={theme.text} surface={theme.background} />
-              <View style={styles.cardText}>
-                <Text style={[styles.cardTitle, { color: theme.text }]}>I'm a Customer</Text>
-                <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
-                  Discover shops, book appointments, leave reviews
-                </Text>
-              </View>
-              <Text style={[styles.arrow, { color: theme.accent }]}>→</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          <RoleCard
+            photo={customerPhoto}
+            title="I'm a Customer"
+            desc="Discover, book, and review services"
+            translateX={customerX}
+            scale={customerScale}
+            onPress={() => choose('customer')}
+            icon={<CustomerIcon ink={theme.text} />}
+            accent={theme.accent}
+            cream={theme.background}
+            ink={theme.text}
+          />
+          <RoleCard
+            photo={ownerPhoto}
+            title="I'm a Business Owner"
+            desc="Manage bookings, grow your business"
+            translateX={ownerX}
+            scale={ownerScale}
+            onPress={() => choose('owner')}
+            icon={<OwnerIcon ink={theme.text} />}
+            accent={theme.accent}
+            cream={theme.background}
+            ink={theme.text}
+          />
+        </View>
 
-          <Animated.View style={{ flex: 1, transform: [{ translateX: ownerX }, { scale: ownerScale }] }}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.accent }]}
-              onPress={() => choose('owner')}
-            >
-              <OwnerArt gold={theme.accent} ink={theme.text} surface={theme.background} />
-              <View style={styles.cardText}>
-                <Text style={[styles.cardTitle, { color: theme.text }]}>I'm a Business Owner</Text>
-                <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
-                  Manage bookings, grow your shop, reach new clients
-                </Text>
-              </View>
-              <Text style={[styles.arrow, { color: theme.accent }]}>→</Text>
-            </TouchableOpacity>
-          </Animated.View>
+        <View style={styles.trustRow}>
+          <View style={styles.trustItem}>
+            <Ionicons name="checkmark" size={12} color={theme.accent} />
+            <Text style={[styles.trustText, { color: theme.textSecondary }]}>Secure</Text>
+          </View>
+          <Ionicons name="ellipse" size={6} color={theme.textSecondary} style={styles.trustDot} />
+          <Text style={[styles.trustText, { color: theme.textSecondary }]}>Reliable</Text>
+          <Ionicons name="ellipse" size={6} color={theme.textSecondary} style={styles.trustDot} />
+          <Text style={[styles.trustText, { color: theme.textSecondary }]}>Trusted</Text>
         </View>
       </Animated.View>
     </ThemedScreen>
@@ -181,19 +199,64 @@ export default function RoleSelectionScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 40, paddingBottom: 24 },
-  header: { alignItems: 'center', justifyContent: 'center', height: 200 },
+  header: { alignItems: 'center', justifyContent: 'center', height: 160 },
   blob: {
     position: 'absolute', width: 260, height: 260, borderRadius: 130, top: -30,
   },
-  brand: { fontSize: 42, fontWeight: '800', letterSpacing: 0.5 },
-  tagline: { fontSize: 15, marginTop: 8 },
+  title: { fontSize: 26, fontWeight: '800', letterSpacing: 0.3 },
+  subtitle: { fontSize: 14, marginTop: 8, textAlign: 'center', paddingHorizontal: 20, lineHeight: 20 },
   cards: { flex: 1, gap: 16, justifyContent: 'center' },
   card: {
-    flex: 1, borderRadius: 24, borderWidth: 1.5, padding: 24,
-    alignItems: 'center', justifyContent: 'center', maxHeight: 240,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    height: 210,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
   },
-  cardText: { alignItems: 'center', marginTop: 12 },
-  cardTitle: { fontSize: 22, fontWeight: '800' },
-  cardDesc: { fontSize: 13, textAlign: 'center', marginTop: 6, lineHeight: 19 },
-  arrow: { fontSize: 22, marginTop: 10, fontWeight: '700' },
+  cardPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    width: undefined,
+    height: undefined,
+  },
+  photoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  badge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTextWrap: { padding: 18, paddingRight: 70 },
+  cardTitle: { fontSize: 19, fontWeight: '800', color: '#FFFFFF' },
+  cardDesc: { fontSize: 13, color: '#F0EDE7', marginTop: 4, lineHeight: 18 },
+  arrowCircle: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+  },
+  trustItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  trustText: { fontSize: 12, letterSpacing: 0.3 },
+  trustDot: { marginHorizontal: 4 },
 });
