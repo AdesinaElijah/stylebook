@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Animated, Easing,
+  Platform, ScrollView, Animated, Easing, ImageBackground,
 } from 'react-native';
 import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
 import { authAPI } from '../../services/api';
@@ -169,6 +169,14 @@ export default function CustomerLoginScreen({ navigation }: any) {
             <Text style={[styles.backText, { color: theme.accent }]}>← Back</Text>
           </TouchableOpacity>
 
+          <ImageBackground
+            source={require('../../../assets/onboarding1.png')}
+            style={styles.headerImage}
+            imageStyle={styles.headerImageInner}
+          >
+            {/* decorative center icon could go here */}
+          </ImageBackground>
+
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
             <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 8 }}>
               <SalonIllustration gold={theme.accent} ink={theme.text} surface={theme.surface} />
@@ -293,6 +301,8 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   scroll: { padding: 24, paddingTop: 60, paddingBottom: 40 },
+  headerImage: { width: '100%', height: 240, marginBottom: -36 },
+  headerImageInner: { borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   back: { marginBottom: 12 },
   backText: { fontSize: 16 },
   title: { fontSize: 30, fontWeight: '800', marginBottom: 4 },
