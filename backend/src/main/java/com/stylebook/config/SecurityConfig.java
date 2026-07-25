@@ -44,8 +44,7 @@ public class SecurityConfig {
                     "/api/auth/**",
                     "/api/shops/**",
                     "/api/posts/**",
-                    "/uploads/**",
-                    "/ws/**"
+                    "/uploads/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
