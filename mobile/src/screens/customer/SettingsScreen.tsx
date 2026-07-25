@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import { notificationsAPI } from '../../services/api';
 
 const APP_VERSION = '1.0.0';
 const SETTINGS_KEY = 'stylebook_customer_settings';
@@ -14,7 +15,10 @@ export default function SettingsScreen({ navigation }: any) {
   const { logout } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
   const [settings, setSettings] = useState({
-    pushNotifications: true,
+    inAppEnabled: true,
+    pushEnabled: true,
+    smsEnabled: false,
+    smsTransactionalOnly: true,
     bookingReminders: true,
     emailUpdates: false,
   });
@@ -23,12 +27,20 @@ export default function SettingsScreen({ navigation }: any) {
     AsyncStorage.getItem(SETTINGS_KEY).then((saved) => {
       if (saved) setSettings(JSON.parse(saved));
     });
+    notificationsAPI.getPreferences().then((res) => {
+      setSettings((prev) => ({ ...prev, ...res.data }));
+    }).catch(() => {});
   }, []);
 
-  const updateSetting = (key: string, value: boolean) => {
+  const updateSetting = async (key: string, value: boolean) => {
     const next = { ...settings, [key]: value };
     setSettings(next);
     AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    try {
+      await notificationsAPI.updatePreferences({ [key]: value });
+    } catch (err) {
+      console.warn('update preferences failed', err);
+    }
   };
 
   const Row = ({ label, sub, value, onChange }: any) => (
@@ -68,10 +80,28 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>NOTIFICATIONS</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            label="In-app Notifications"
+            sub="Show alerts inside StyleBook"
+            value={settings.inAppEnabled}
+            onChange={(v: boolean) => updateSetting('inAppEnabled', v)}
+          />
+          <Row
             label="Push Notifications"
             sub="Booking confirmations and updates"
-            value={settings.pushNotifications}
-            onChange={(v: boolean) => updateSetting('pushNotifications', v)}
+            value={settings.pushEnabled}
+            onChange={(v: boolean) => updateSetting('pushEnabled', v)}
+          />
+          <Row
+            label="SMS Notifications"
+            sub="Transactional alerts only"
+            value={settings.smsEnabled}
+            onChange={(v: boolean) => updateSetting('smsEnabled', v)}
+          />
+          <Row
+            label="SMS Transactional Only"
+            sub="Keep SMS limited to payment/booking alerts"
+            value={settings.smsTransactionalOnly}
+            onChange={(v: boolean) => updateSetting('smsTransactionalOnly', v)}
           />
           <Row
             label="Appointment Reminders"
