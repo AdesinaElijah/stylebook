@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shopsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import { loadNotificationPreferences, saveNotificationPreferences } from '../../services/notificationPreferences';
 
 const APP_VERSION = '1.0.0';
-const SETTINGS_KEY = 'stylebook_owner_settings';
 
 const PLAN_INFO: any = {
   FREE: { price: 'GHS 0/mo', desc: '10 bookings, 3 photos, 5 posts' },
@@ -22,22 +21,21 @@ export default function OwnerSettingsScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const [shop, setShop] = useState<any>(null);
   const [settings, setSettings] = useState({
-    pushNotifications: true,
-    bookingAlerts: true,
-    reviewAlerts: true,
+    in_app_enabled: true,
+    push_enabled: true,
+    sms_enabled: false,
+    sms_transactional_only: true,
   });
 
   useEffect(() => {
-    AsyncStorage.getItem(SETTINGS_KEY).then((saved) => {
-      if (saved) setSettings(JSON.parse(saved));
-    });
+    loadNotificationPreferences(user?.userId).then((prefs) => setSettings(prefs));
     shopsAPI.getMyShop().then((res) => setShop(res.data)).catch(() => {});
-  }, []);
+  }, [user?.userId]);
 
-  const updateSetting = (key: string, value: boolean) => {
-    const next = { ...settings, [key]: value };
+  const updateSetting = async (key: string, value: boolean) => {
+    const next = { ...settings, [key]: value } as typeof settings;
     setSettings(next);
-    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    await saveNotificationPreferences(user?.userId, next);
   };
 
   const changePlan = (pl: string) => {
@@ -120,25 +118,28 @@ export default function OwnerSettingsScreen() {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>NOTIFICATIONS</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            label="In-app Notifications"
+            sub="Show alerts inside the app"
+            value={settings.in_app_enabled}
+            onChange={(v: boolean) => updateSetting('in_app_enabled', v)}
+          />
+          <Row
             label="Push Notifications"
             sub="General app notifications"
-            value={settings.pushNotifications}
-            onChange={(v: boolean) => updateSetting('pushNotifications', v)}
+            value={settings.push_enabled}
+            onChange={(v: boolean) => updateSetting('push_enabled', v)}
           />
           <Row
-            label="Booking Alerts"
-            sub="Get notified of new bookings"
-            value={settings.bookingAlerts}
-            onChange={(v: boolean) => updateSetting('bookingAlerts', v)}
+            label="SMS Notifications"
+            sub="Transactional alerts only"
+            value={settings.sms_enabled}
+            onChange={(v: boolean) => updateSetting('sms_enabled', v)}
           />
           <Row
-            label="Review Alerts"
-            sub="When a customer leaves a review"
-            value={settings.reviewAlerts}
-            onChange={(v: boolean) => updateSetting('reviewAlerts', v)}
-          />
-        </View>
-
+            label="Transactional SMS only"
+            sub="Only payment and booking updates"
+            value={settings.sms_transactional_only}
+            onChange={(v: boolean) => updateSetting('sms_transactional_only', v)}
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>YOUR PLAN</Text>
         {['FREE', 'PRO', 'ENTERPRISE'].map((pl) => (
           <View
