@@ -6,7 +6,9 @@ import com.stylebook.entity.Review;
 import com.stylebook.entity.Shop;
 import com.stylebook.entity.User;
 import com.stylebook.repository.*;
+import com.stylebook.event.ReviewCreatedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final BookingRepository bookingRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ReviewDTO.ReviewResponse createReview(UUID customerId,
@@ -80,6 +83,7 @@ public class ReviewService {
 
         reviewRepository.save(review);
         updateShopRating(booking.getShop());
+        eventPublisher.publishEvent(new ReviewCreatedEvent(review));
 
         return ReviewDTO.ReviewResponse.from(review);
     }

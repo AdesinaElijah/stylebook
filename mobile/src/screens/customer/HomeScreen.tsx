@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { shopsAPI, promosAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
+import NotificationBell from '../../components/NotificationBell';
 const CATEGORIES = [
   { id: 'ALL', label: 'All', icon: '✨' },
   { id: 'SALON', label: 'Salons', icon: '💇' },
@@ -150,9 +151,9 @@ export default function HomeScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={[styles.notificationBtn, { backgroundColor: theme.surfaceSecondary }]}>
-          <Ionicons name="notifications-outline" size={18} color={theme.text} />
-        </TouchableOpacity>
+        <View style={styles.notificationWrap}>
+          <NotificationBell />
+        </View>
       </View>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadShops(); }} tintColor={theme.accent} />}
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
   },
   nearMeText: { fontSize: 13, fontWeight: '600' },
-  notificationBtn: {
+  notificationWrap: {
     width: 36, height: 36, borderRadius: 18,
     justifyContent: 'center', alignItems: 'center',
   },
