@@ -77,4 +77,11 @@ export const promosAPI = {
   create: (data: any) => api.post('/promos', data),
   remove: (promoId: string) => api.delete(`/promos/${promoId}`),
 };
+export const notificationsAPI = {
+  list: (userId: string, params?: { page?: number; size?: number; unread?: boolean }) =>
+    api.get('/notifications', { params: { userId, ...params } }),
+  unreadCount: (userId: string) => api.get('/notifications/unread-count', { params: { userId } }),
+  markRead: (id: string) => api.patch(`/notifications/${id}/read`),
+  markAllRead: (userId: string) => api.patch('/notifications/mark-all-read', null, { params: { userId } }),
+};
 export default api;

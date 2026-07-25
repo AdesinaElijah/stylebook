@@ -2,8 +2,10 @@ package com.stylebook.service;
 
 import com.stylebook.dto.PostDTO;
 import com.stylebook.entity.*;
+import com.stylebook.event.PostInteractionEvent;
 import com.stylebook.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ public class PostService {
     private final ShopRepository shopRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostDTO.PostResponse createPost(UUID ownerId, PostDTO.CreatePostRequest request) {
@@ -87,6 +90,14 @@ public class PostService {
                     .build();
             likeRepository.save(like);
             post.setLikeCount(post.getLikeCount() + 1);
+            eventPublisher.publishEvent(new PostInteractionEvent(
+                    NotificationType.POST_LIKE,
+                    post.getShop().getOwner().getId(),
+                    user.getId(),
+                    post.getId(),
+                    post.getCaption(),
+                    user.getFullName()
+            ));
         }
 
         postRepository.save(post);
@@ -109,6 +120,16 @@ public class PostService {
                 .build();
 
         commentRepository.save(comment);
+
+        eventPublisher.publishEvent(new PostInteractionEvent(
+                NotificationType.POST_COMMENT,
+                post.getShop().getOwner().getId(),
+                user.getId(),
+                post.getId(),
+                post.getCaption(),
+                user.getFullName()
+        ));
+
         return PostDTO.CommentResponse.from(comment);
     }
 
