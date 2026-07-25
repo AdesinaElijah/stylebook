@@ -2,33 +2,31 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import { loadNotificationPreferences, saveNotificationPreferences } from '../../services/notificationPreferences';
 
 const APP_VERSION = '1.0.0';
-const SETTINGS_KEY = 'stylebook_customer_settings';
 
 export default function SettingsScreen({ navigation }: any) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
   const [settings, setSettings] = useState({
-    pushNotifications: true,
-    bookingReminders: true,
-    emailUpdates: false,
+    in_app_enabled: true,
+    push_enabled: true,
+    sms_enabled: false,
+    sms_transactional_only: true,
   });
 
   useEffect(() => {
-    AsyncStorage.getItem(SETTINGS_KEY).then((saved) => {
-      if (saved) setSettings(JSON.parse(saved));
-    });
-  }, []);
+    loadNotificationPreferences(user?.userId).then((prefs) => setSettings(prefs));
+  }, [user?.userId]);
 
-  const updateSetting = (key: string, value: boolean) => {
-    const next = { ...settings, [key]: value };
+  const updateSetting = async (key: string, value: boolean) => {
+    const next = { ...settings, [key]: value } as typeof settings;
     setSettings(next);
-    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    await saveNotificationPreferences(user?.userId, next);
   };
 
   const Row = ({ label, sub, value, onChange }: any) => (
@@ -68,29 +66,37 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>NOTIFICATIONS</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            label="In-app Notifications"
+            sub="Show alerts inside the app"
+            value={settings.in_app_enabled}
+            onChange={(v: boolean) => updateSetting('in_app_enabled', v)}
+          />
+          <Row
             label="Push Notifications"
             sub="Booking confirmations and updates"
-            value={settings.pushNotifications}
-            onChange={(v: boolean) => updateSetting('pushNotifications', v)}
+            value={settings.push_enabled}
+            onChange={(v: boolean) => updateSetting('push_enabled', v)}
           />
           <Row
-            label="Appointment Reminders"
-            sub="Alert 10 minutes before your appointment"
-            value={settings.bookingReminders}
-            onChange={(v: boolean) => updateSetting('bookingReminders', v)}
+            label="SMS Notifications"
+            sub="Transactional alerts only"
+            value={settings.sms_enabled}
+            onChange={(v: boolean) => updateSetting('sms_enabled', v)}
           />
-        </View>
-
+          <Row
+            label="Transactional SMS only"
+            sub="Only payment and booking updates"
+            value={settings.sms_transactional_only}
+            onChange={(v: boolean) => updateSetting('sms_transactional_only', v)}
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>EMAIL</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
-          <Row
-            label="Email Updates"
-            sub="News, offers and tips from StyleBook"
-            value={settings.emailUpdates}
-            onChange={(v: boolean) => updateSetting('emailUpdates', v)}
-          />
-        </View>
-
+          <View style={[styles.row, { borderBottomColor: theme.border }]}> 
+            <View style={styles.rowText}>
+              <Text style={[styles.rowLabel, { color: theme.text }]}>Email Updates</Text>
+              <Text style={[styles.rowSub, { color: theme.textSecondary }]}>News, offers and tips from StyleBook</Text>
+            </View>
+            <Text style={[styles.rowValue, { color: theme.textSecondary }]}>Coming soon</Text>
+          </View>
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>ABOUT</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <View style={[styles.row, { borderBottomColor: theme.border }]}>

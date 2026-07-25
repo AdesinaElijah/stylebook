@@ -7,6 +7,7 @@ import { shopsAPI, bookingsAPI, postsAPI, reviewsAPI } from '../../services/api'
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import NotificationBell from '../../components/NotificationBell';
 
 export default function OwnerDashboardScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -105,8 +106,11 @@ export default function OwnerDashboardScreen({ navigation }: any) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerLabel, { color: theme.textSecondary }]}>Business Dashboard</Text>
-          <Text style={[styles.shopTitle, { color: theme.text }]}>{shop?.name}</Text>
+          <View style={styles.headerTextWrap}>
+            <Text style={[styles.headerLabel, { color: theme.textSecondary }]}>Business Dashboard</Text>
+            <Text style={[styles.shopTitle, { color: theme.text }]}>{shop?.name}</Text>
+          </View>
+          <NotificationBell />
         </View>
 
         {/* Profile active banner */}
@@ -256,7 +260,8 @@ export default function OwnerDashboardScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerTextWrap: { flex: 1, marginRight: 12 },
   headerLabel: { fontSize: 13 },
   shopTitle: { fontSize: 24, fontWeight: '900', marginTop: 2 },
   activeBanner: {
