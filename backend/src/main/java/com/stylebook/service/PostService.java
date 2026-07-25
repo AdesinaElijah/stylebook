@@ -3,11 +3,7 @@ package com.stylebook.service;
 import com.stylebook.dto.PostDTO;
 import com.stylebook.entity.*;
 import com.stylebook.repository.*;
-import com.stylebook.event.PostCommentedEvent;
-import com.stylebook.event.PostLikedEvent;
-import com.stylebook.event.PostSharedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +20,6 @@ public class PostService {
     private final ShopRepository shopRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostDTO.PostResponse createPost(UUID ownerId, PostDTO.CreatePostRequest request) {
@@ -92,7 +87,6 @@ public class PostService {
                     .build();
             likeRepository.save(like);
             post.setLikeCount(post.getLikeCount() + 1);
-            eventPublisher.publishEvent(new PostLikedEvent(post.getShop().getOwner().getId(), post.getId(), user.getId()));
         }
 
         postRepository.save(post);
@@ -115,7 +109,6 @@ public class PostService {
                 .build();
 
         commentRepository.save(comment);
-        eventPublisher.publishEvent(new PostCommentedEvent(post.getShop().getOwner().getId(), post.getId(), user.getId(), request.getContent()));
         return PostDTO.CommentResponse.from(comment);
     }
 
@@ -126,17 +119,6 @@ public class PostService {
                 .stream()
                 .map(PostDTO.CommentResponse::from)
                 .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public void sharePost(UUID userId, UUID postId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
-
-        eventPublisher.publishEvent(new PostSharedEvent(post.getShop().getOwner().getId(), post.getId(), user.getId()));
     }
 
     @Transactional
