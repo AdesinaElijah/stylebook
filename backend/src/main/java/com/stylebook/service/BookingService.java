@@ -6,8 +6,11 @@ import com.stylebook.entity.Booking;
 import com.stylebook.entity.Service;
 import com.stylebook.entity.Shop;
 import com.stylebook.entity.User;
+import com.stylebook.event.BookingRequestedEvent;
+import com.stylebook.event.BookingStatusChangedEvent;
 import com.stylebook.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class BookingService {
     private final ShopRepository shopRepository;
     private final ServiceRepository serviceRepository;
     private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public BookingDTO.BookingResponse createBooking(UUID customerId,
@@ -57,6 +61,18 @@ public class BookingService {
 
         bookingRepository.save(booking);
         booking = bookingRepository.findById(booking.getId()).orElse(booking);
+
+        eventPublisher.publishEvent(new BookingRequestedEvent(
+                booking.getId(),
+                shop.getOwner().getId(),
+                customer.getId(),
+                shop.getId(),
+                shop.getName(),
+                service.getName(),
+                booking.getBookingDate(),
+                booking.getBookingTime()
+        ));
+
         return BookingDTO.BookingResponse.from(booking);
     }
 
@@ -113,6 +129,16 @@ public class BookingService {
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
 
+        eventPublisher.publishEvent(new BookingStatusChangedEvent(
+                booking.getId(),
+                booking.getCustomer().getId(),
+                booking.getCustomer().getId(),
+                booking.getShop().getId(),
+                booking.getShop().getName(),
+                booking.getService().getName(),
+                booking.getStatus()
+        ));
+
         try {
             emailService.sendBookingConfirmationEmail(
                     booking.getCustomer().getEmail(),
@@ -144,6 +170,16 @@ public class BookingService {
         booking.setStatus(Booking.BookingStatus.CANCELLED);
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
+
+        eventPublisher.publishEvent(new BookingStatusChangedEvent(
+                booking.getId(),
+                booking.getCustomer().getId(),
+                booking.getCustomer().getId(),
+                booking.getShop().getId(),
+                booking.getShop().getName(),
+                booking.getService().getName(),
+                booking.getStatus()
+        ));
 
         try {
             emailService.sendBookingCancellationEmail(
