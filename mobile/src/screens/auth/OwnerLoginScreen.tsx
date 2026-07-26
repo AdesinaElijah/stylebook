@@ -5,6 +5,7 @@ import {
   Platform, ScrollView, Animated, Easing,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -131,6 +132,15 @@ export default function OwnerLoginScreen({ navigation }: any) {
 
   return (
     <ThemedScreen>
+      <LinearGradient
+        colors={
+          isDark
+            ? ['#0F0906', '#241512', '#1a1210']
+            : ['#F5DED3', '#E8B49B', '#F5E2D3']
+        }
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
         <View style={[styles.bgDiagonalBar, { backgroundColor: c.button, opacity: 0.08 }]} />
         <View style={[styles.bgDiamond, { backgroundColor: c.button, opacity: 0.16 }]} />

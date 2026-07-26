@@ -5,6 +5,7 @@ import {
   Platform, ScrollView, Animated, Easing,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,7 +15,7 @@ type Mode = 'choice' | 'login' | 'signup';
 
 export default function CustomerLoginScreen({ navigation }: any) {
   const { login } = useAuth();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -119,6 +120,15 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
   return (
     <ThemedScreen>
+      <LinearGradient
+        colors={
+          isDark
+            ? ['#0F0B06', '#241a10', '#1a1410']
+            : ['#F8EBD2', '#F0D6A0', '#F8ECD5']
+        }
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
         <View style={[styles.bgCircleTopLeft, { backgroundColor: theme.accent, opacity: 0.07 }]} />
         <View style={[styles.bgCircleTopRight, { backgroundColor: theme.accent, opacity: 0.09 }]} />
