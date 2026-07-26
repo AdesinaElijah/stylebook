@@ -7,10 +7,14 @@ import {
   Animated,
   Easing,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../context/ThemeContext';
 import ThemedScreen from '../components/ThemedScreen';
+
+// Adjust this path if your OnboardingScreen.tsx lives somewhere other than src/screens/
+const logo = require('../../icon.png');
 
 const slides = [
   {
@@ -88,9 +92,7 @@ export default function OnboardingScreen({ navigation }: any) {
       </TouchableOpacity>
 
       <View style={styles.header}>
-        <View style={[styles.logoCircle, { backgroundColor: theme.text }]}>
-          <Ionicons name="flower" size={30} color={theme.accent} />
-        </View>
+        <Image source={logo} style={styles.logoCircle} resizeMode="cover" />
         <Text style={[styles.brand, { color: theme.text }]}>
           Style<Text style={{ color: theme.accent }}>Book</Text>
         </Text>
@@ -161,8 +163,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
     marginBottom: 16,
   },
   brand: { fontSize: 30, fontWeight: '800' },
