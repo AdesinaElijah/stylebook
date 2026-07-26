@@ -9,6 +9,7 @@ import {
   ImageBackground,
   useWindowDimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import ThemedScreen from '../components/ThemedScreen';
 
@@ -41,7 +42,11 @@ export default function WelcomeScreen({ navigation }: any) {
         resizeMode="cover"
         style={styles.background}
       >
-        <View style={styles.overlay} />
+        <LinearGradient
+          colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.55)']}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFillObject}
+        />
 
         <TouchableOpacity
           activeOpacity={0.7}
@@ -78,7 +83,6 @@ export default function WelcomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   background: { flex: 1, justifyContent: 'flex-end' },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.1)' },
   themeToggle: {
     position: 'absolute',
     top: 16,
