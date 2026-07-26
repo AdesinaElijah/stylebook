@@ -33,6 +33,9 @@ const slides = [
   },
 ];
 
+// How long each slide stays on screen before auto-advancing (ms)
+const AUTO_ADVANCE_INTERVAL = 3000;
+
 export default function OnboardingScreen({ navigation }: any) {
   const { theme, isDark, toggleTheme } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
@@ -55,12 +58,20 @@ export default function OnboardingScreen({ navigation }: any) {
     }).start();
   }, [page, ready, transition]);
 
-  const handleNext = () => {
-    if (page === slides.length - 1) {
-      navigation.navigate('RoleSelection');
-      return;
-    }
-    setPage((current) => current + 1);
+  // Auto-advance through the slides on a timer, looping back to the start.
+  // This only cycles the visual slide — it never triggers navigation.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPage((current) => (current + 1) % slides.length);
+    }, AUTO_ADVANCE_INTERVAL);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Get Started always sends the user to role selection,
+  // regardless of which slide is currently showing.
+  const handleGetStarted = () => {
+    navigation.navigate('RoleSelection');
   };
 
   const slideOpacity = transition;
@@ -114,7 +125,7 @@ export default function OnboardingScreen({ navigation }: any) {
 
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={handleNext}
+          onPress={handleGetStarted}
           style={[styles.actionButton, { backgroundColor: theme.accent, width: screenWidth - 48 }]}
         >
           <Text style={styles.actionText}>Get Started</Text>
