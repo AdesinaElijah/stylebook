@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Animated, Easing, Image,
+  Platform, ScrollView, Animated, Easing,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { authAPI } from '../../services/api';
@@ -24,7 +24,6 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(40)).current;
-  const float = useRef(new Animated.Value(0)).current;
   const btn1 = useRef(new Animated.Value(0)).current;
   const btn2 = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(1)).current;
@@ -40,16 +39,8 @@ export default function CustomerLoginScreen({ navigation }: any) {
       Animated.spring(btn1, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
       Animated.spring(btn2, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
     ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
   }, []);
 
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
   const btnStyle = (v: Animated.Value) => ({
     opacity: v,
     transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }) }],
@@ -128,6 +119,14 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
   return (
     <ThemedScreen>
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        <View style={[styles.bgCircleTopLeft, { backgroundColor: theme.accent, opacity: 0.07 }]} />
+        <View style={[styles.bgCircleTopRight, { backgroundColor: theme.accent, opacity: 0.09 }]} />
+        <View style={[styles.bgCircleBottom, { backgroundColor: theme.accent, opacity: 0.06 }]} />
+        <View style={[styles.bgDotSmall1, { backgroundColor: theme.accent, opacity: 0.28 }]} />
+        <View style={[styles.bgDotSmall2, { backgroundColor: theme.accent, opacity: 0.22 }]} />
+        <View style={[styles.bgDotSmall3, { backgroundColor: theme.accent, opacity: 0.3 }]} />
+      </View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={handleBack} style={styles.back}>
@@ -135,21 +134,17 @@ export default function CustomerLoginScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
-            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 16 }}>
-              <View style={[styles.heroFrame, { backgroundColor: theme.surface, borderColor: theme.accent }]}> 
-                <Image
-                  source={require('../../../assets/tile-merchant-ireland-g2u8gq5XcwE-unsplash.jpg')}
-                  style={styles.heroImage}
-                  resizeMode="contain"
-                />
-                <View style={[styles.heroAccentBar, { backgroundColor: theme.accent }]} />
-                <View style={[styles.heroDot, { backgroundColor: theme.accent }]} />
-              </View>
-            </Animated.View>
-
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
               {mode === 'choice' ? (
                 <>
+                  <View style={styles.decorWrap}>
+                    <View style={[styles.decorCircleBack, { backgroundColor: theme.accent, opacity: 0.12 }]} />
+                    <View style={[styles.decorCircleAccent, { backgroundColor: theme.accent, opacity: 0.22 }]} />
+                    <View style={[styles.decorBadge, { borderColor: theme.accent, backgroundColor: theme.surface }]}>
+                      <Ionicons name="person" size={32} color={theme.accent} />
+                    </View>
+                  </View>
+
                   <Text style={[styles.title, { color: theme.text, textAlign: 'center' }]}>Hello there 👋</Text>
                   <Text style={[styles.subtitle, { color: theme.textSecondary, textAlign: 'center' }]}>
                     How would you like to continue?
@@ -310,34 +305,86 @@ const styles = StyleSheet.create({
   choiceBtnOutline: { borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 14, borderWidth: 1.5 },
   choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
   choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
-  heroFrame: {
-    width: '100%',
-    borderRadius: 28,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.12,
-    shadowRadius: 28,
-    elevation: 8,
-  },
-  heroImage: { width: '100%', height: 220 },
-  heroAccentBar: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    width: 60,
-    height: 6,
-    borderRadius: 3,
-  },
-  heroDot: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    opacity: 0.95,
-  },
   forgotText: { fontSize: 13, fontWeight: '600' },
+  decorWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 120,
+    marginBottom: 8,
+  },
+  decorCircleBack: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+  },
+  decorCircleAccent: {
+    position: 'absolute',
+    top: 6,
+    right: '28%',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+  },
+  decorBadge: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  bgCircleTopLeft: {
+    position: 'absolute',
+    top: -70,
+    left: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+  },
+  bgCircleTopRight: {
+    position: 'absolute',
+    top: 90,
+    right: -60,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+  },
+  bgCircleBottom: {
+    position: 'absolute',
+    bottom: -90,
+    left: -50,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+  },
+  bgDotSmall1: {
+    position: 'absolute',
+    top: 240,
+    left: 36,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  bgDotSmall2: {
+    position: 'absolute',
+    top: 360,
+    right: 50,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  bgDotSmall3: {
+    position: 'absolute',
+    bottom: 140,
+    right: 90,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
 });

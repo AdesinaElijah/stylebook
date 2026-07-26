@@ -6,63 +6,47 @@ import {
   StyleSheet,
   Animated,
   Easing,
-  ImageBackground,
   useWindowDimensions,
+  Image,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../context/ThemeContext';
 import ThemedScreen from '../components/ThemedScreen';
 
+// Adjust this path if your OnboardingScreen.tsx lives somewhere other than src/screens/
+const logo = require('../../icon.png');
+
 const slides = [
   {
-    key: 'welcome',
-    image: require('../../assets/onboarding1.png'),
-    title: 'Welcome to StyleBook',
-    subtitle: 'Find trusted barbers, salons, and beauty professionals in just a few taps.',
-    label: 'Next',
-  },
-  {
     key: 'discover',
-    image: require('../../assets/onboarding2.png'),
-    title: 'Discover Top Professionals',
-    subtitle: 'Explore nearby barbers and salons with verified reviews, pricing, availability, and directions.',
-    label: 'Next',
+    icon: 'search' as const,
+    title: 'Find Expert Stylists',
+    subtitle: 'Discover the best barbers, salons, and beauty professionals directly in your neighborhood.',
   },
   {
     key: 'booking',
-    image: require('../../assets/onboarding3.png'),
-    title: 'Book In Seconds',
-    subtitle: 'Choose your preferred stylist, pick a time, and confirm instantly.',
-    label: 'Next',
+    icon: 'calendar-outline' as const,
+    title: 'Book in Seconds',
+    subtitle: 'Select services, pick your preferred professional, and reserve your slot instantly.',
   },
   {
     key: 'confidence',
-    image: require('../../assets/onboarding4.png'),
-    title: 'Look Great. Feel Confident.',
-    subtitle: 'Book trusted professionals and enjoy a seamless grooming experience every time.',
-    label: 'Get Started',
+    icon: 'sparkles' as const,
+    title: 'Elevate Your Look',
+    subtitle: 'Read verified reviews, view portfolios, and step out feeling confident and styled.',
   },
 ];
 
+// How long each slide stays on screen before auto-advancing (ms)
+const AUTO_ADVANCE_INTERVAL = 3000;
+
 export default function OnboardingScreen({ navigation }: any) {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const [page, setPage] = useState(0);
   const [ready, setReady] = useState(false);
-  const { width: screenWidth } = useWindowDimensions();
 
   const transition = useRef(new Animated.Value(1)).current;
-  const floatAnim = useRef(new Animated.Value(0)).current;
-
-  const accent = theme.accent;
-  const buttonTextColor = isDark ? '#000' : '#FFFFFF';
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, { toValue: -8, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
-  }, [floatAnim]);
 
   useEffect(() => {
     if (!ready) {
@@ -72,102 +56,138 @@ export default function OnboardingScreen({ navigation }: any) {
     transition.setValue(0);
     Animated.timing(transition, {
       toValue: 1,
-      duration: 420,
+      duration: 380,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }, [page, ready, transition]);
 
-  const handleSkip = () => navigation.navigate('RoleSelection');
+  // Auto-advance through the slides on a timer, looping back to the start.
+  // This only cycles the visual slide — it never triggers navigation.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPage((current) => (current + 1) % slides.length);
+    }, AUTO_ADVANCE_INTERVAL);
 
-  const handleNext = () => {
-    if (page === slides.length - 1) {
-      navigation.navigate('RoleSelection');
-      return;
-    }
-    setPage((current) => current + 1);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Get Started always sends the user to role selection,
+  // regardless of which slide is currently showing.
+  const handleGetStarted = () => {
+    navigation.navigate('RoleSelection');
   };
 
   const slideOpacity = transition;
-  const slideTranslate = transition.interpolate({ inputRange: [0, 1], outputRange: [24, 0] });
+  const slideTranslate = transition.interpolate({ inputRange: [0, 1], outputRange: [16, 0] });
 
   return (
-    <ThemedScreen style={[styles.screen, { backgroundColor: theme.background }]}> 
-      <ImageBackground source={slides[page].image} resizeMode="cover" style={styles.background}>
-        <View style={styles.overlay} />
+    <ThemedScreen style={[styles.screen, { backgroundColor: theme.background }]}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={toggleTheme}
+        style={[styles.themeToggle, { backgroundColor: theme.surface }]}
+      >
+        <Ionicons name={isDark ? 'sunny' : 'moon'} size={18} color={theme.accent} />
+      </TouchableOpacity>
 
-        <View style={styles.topBar}>
-          <TouchableOpacity onPress={handleSkip} activeOpacity={0.8} style={styles.skipButton}>
-            <Text style={[styles.skipText, { color: '#333' }]}>Skip</Text>
-          </TouchableOpacity>
+      <View style={styles.header}>
+        <Image source={logo} style={styles.logoCircle} resizeMode="cover" />
+        <Text style={[styles.brand, { color: theme.text }]}>
+          Style<Text style={{ color: theme.accent }}>Book</Text>
+        </Text>
+        <Text style={[styles.tagline, { color: theme.textSecondary }]}>
+          Book your next look in seconds
+        </Text>
+      </View>
+
+      <Animated.View style={[styles.content, { opacity: slideOpacity, transform: [{ translateY: slideTranslate }] }]}>
+        <View style={[styles.iconCircle, { backgroundColor: theme.accentLight }]}>
+          <Ionicons name={slides[page].icon} size={30} color={theme.accent} />
+        </View>
+        <Text style={[styles.title, { color: theme.text }]}>{slides[page].title}</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{slides[page].subtitle}</Text>
+      </Animated.View>
+
+      <View style={styles.footerBlock}>
+        <View style={styles.indicatorRow}>
+          {slides.map((item, index) => (
+            <View
+              key={item.key}
+              style={[
+                styles.indicator,
+                {
+                  backgroundColor: index === page ? theme.accent : theme.border,
+                  width: index === page ? 28 : 8,
+                },
+              ]}
+            />
+          ))}
         </View>
 
-        <Animated.View style={[styles.content, { opacity: slideOpacity, transform: [{ translateY: slideTranslate }] }]}> 
-          <View style={{ maxWidth: '90%' }}>
-            <Text style={[styles.heading, {
-              color: '#FFFFFF',
-              textShadowColor: 'rgba(0,0,0,0.16)',
-              textShadowOffset: { width: 0, height: 2 },
-              textShadowRadius: 6,
-            }]}>{slides[page].title}</Text>
-            <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.9)', marginBottom: 12 }]}>{slides[page].subtitle}</Text>
-          </View>
-
-          <View style={styles.footerBlock}>
-            <View style={styles.indicatorRow}>
-              {slides.map((item, index) => (
-                <View
-                  key={item.key}
-                  style={[
-                    styles.indicator,
-                    {
-                      backgroundColor: index === page ? accent : theme.textTertiary,
-                      width: index === page ? 32 : 10,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={handleNext}
-              style={[styles.actionButton, { backgroundColor: accent, width: screenWidth - 60 }]}
-            >
-              <Text style={[styles.actionText, { color: buttonTextColor }]}>{slides[page].label}</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </ImageBackground>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={handleGetStarted}
+          style={[styles.actionButton, { backgroundColor: theme.accent, width: screenWidth - 48 }]}
+        >
+          <Text style={styles.actionText}>Get Started</Text>
+        </TouchableOpacity>
+        <Text style={[styles.terms, { color: theme.textTertiary }]}>
+          By continuing, you agree to our Terms and Conditions
+        </Text>
+      </View>
     </ThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  topBar: { paddingHorizontal: 24, paddingTop: 24, flexDirection: 'row', justifyContent: 'flex-end', zIndex: 2 },
-  skipButton: { padding: 12 },
-  skipText: { fontSize: 14, fontWeight: '600' },
-  background: { flex: 1, justifyContent: 'space-between' },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'transparent' },
-  content: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 },
-  copyBlock: { maxWidth: '90%', paddingBottom: 24 },
-  heading: { fontSize: 36, fontWeight: '900', lineHeight: 44, marginBottom: 14 },
-  subtitle: { fontSize: 16, lineHeight: 24 },
-  footerBlock: { paddingBottom: 12 },
-  indicatorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
-  indicator: { height: 10, borderRadius: 5, marginHorizontal: 6 },
+  themeToggle: {
+    position: 'absolute',
+    top: 16,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  header: { alignItems: 'center', paddingTop: 70 },
+  logoCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  brand: { fontSize: 30, fontWeight: '800' },
+  tagline: { fontSize: 14, marginTop: 6 },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  title: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 10 },
+  subtitle: { fontSize: 14, lineHeight: 21, textAlign: 'center' },
+  footerBlock: { paddingBottom: 24, paddingHorizontal: 24, alignItems: 'center' },
+  indicatorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, gap: 6 },
+  indicator: { height: 6, borderRadius: 3 },
   actionButton: {
-    alignSelf: 'center',
-    height: 58,
+    height: 56,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 8,
   },
-  actionText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.4 },
+  actionText: { fontSize: 16, fontWeight: '700', color: '#2C1F0F', letterSpacing: 0.3 },
+  terms: { fontSize: 11, textAlign: 'center', marginTop: 12 },
 });

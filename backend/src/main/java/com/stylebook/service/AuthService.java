@@ -24,6 +24,27 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final EmailService emailService;
 
+    private static final SecureRandom OTP_RANDOM = new SecureRandom();
+    private static final int OTP_VALID_MINUTES = 10;
+    private static final int RESEND_COOLDOWN_SECONDS = 30;
+
+    // --- OTP helpers -------------------------------------------------
+
+    private String generateOtp() {
+        int code = OTP_RANDOM.nextInt(1_000_000); // 0 - 999999
+        return String.format("%06d", code);
+    }
+
+    private void issueAndSendOtp(User user) {
+        String code = generateOtp();
+        user.setEmailVerificationToken(code);
+        user.setEmailVerificationTokenExpiry(LocalDateTime.now().plusMinutes(OTP_VALID_MINUTES));
+        userRepository.save(user);
+        emailService.sendOtpEmail(user, code);
+    }
+
+    // --- Registration --------------------------------------------------
+
     @Transactional
     public AuthResponse registerCustomer(CustomerRegisterRequest request) {
         User existing = userRepository.findByEmail(request.getEmail()).orElse(null);
@@ -37,10 +58,11 @@ public class AuthService {
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.UserRole.CUSTOMER)
-                .emailVerified(true)
+                .emailVerified(false)
                 .build();
 
         userRepository.save(user);
+        issueAndSendOtp(user);
 
         String token = jwtUtils.generateToken(user.getId(), user.getEmail(),
                 user.getRole().name());
@@ -60,7 +82,7 @@ public class AuthService {
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.UserRole.OWNER)
-                .emailVerified(true)
+                .emailVerified(false)
                 .build();
 
         userRepository.save(user);
@@ -80,11 +102,14 @@ public class AuthService {
                 .build();
 
         shopRepository.save(shop);
+        issueAndSendOtp(user);
 
         String token = jwtUtils.generateToken(user.getId(), user.getEmail(),
                 user.getRole().name());
         return new AuthResponse(token, user, shop.getId().toString());
     }
+
+    // --- Login -----------------------------------------------------------
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -108,10 +133,36 @@ public class AuthService {
         return new AuthResponse(token, user, shopId);
     }
 
+    // --- Email verification ------------------------------------------
+
     @Transactional
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (user.isEmailVerified()) {
+            throw new RuntimeException("This account is already verified");
+        }
+
+        String storedCode = user.getEmailVerificationToken();
+        LocalDateTime expiry = user.getEmailVerificationTokenExpiry();
+
+        if (storedCode == null || expiry == null) {
+            throw new RuntimeException("No verification code found for this account. Please request a new one.");
+        }
+
+        if (LocalDateTime.now().isAfter(expiry)) {
+            throw new RuntimeException("This code has expired. Please request a new one.");
+        }
+
+        if (!storedCode.equals(request.getCode())) {
+            throw new RuntimeException("Incorrect verification code");
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerificationToken(null);
+        user.setEmailVerificationTokenExpiry(null);
+        userRepository.save(user);
 
         String shopId = null;
         if (user.getRole() == User.UserRole.OWNER) {
@@ -132,6 +183,21 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        return new MessageResponse("Your account is already verified.");
+        if (user.isEmailVerified()) {
+            return new MessageResponse("Your account is already verified.");
+        }
+
+        LocalDateTime expiry = user.getEmailVerificationTokenExpiry();
+        if (expiry != null) {
+            LocalDateTime lastSentAt = expiry.minusMinutes(OTP_VALID_MINUTES);
+            long secondsSinceSent = java.time.Duration.between(lastSentAt, LocalDateTime.now()).getSeconds();
+            if (secondsSinceSent < RESEND_COOLDOWN_SECONDS) {
+                long wait = RESEND_COOLDOWN_SECONDS - secondsSinceSent;
+                throw new RuntimeException("Please wait " + wait + "s before requesting another code");
+            }
+        }
+
+        issueAndSendOtp(user);
+        return new MessageResponse("A new verification code is on its way to your email.");
     }
 }
