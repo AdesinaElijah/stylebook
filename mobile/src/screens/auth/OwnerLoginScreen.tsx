@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Animated, Easing, Image,
+  Platform, ScrollView, Animated, Easing,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { authAPI } from '../../services/api';
@@ -139,14 +139,6 @@ export default function OwnerLoginScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
-            <View style={[styles.imageFrame, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <Image
-                source={require('../../../assets/Screenshot 2026-07-24 162601.png')}
-                resizeMode="cover"
-                style={styles.loginImage}
-              />
-            </View>
-
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
               {mode === 'choice' ? (
                 <>
@@ -381,17 +373,5 @@ const styles = StyleSheet.create({
   },
   passwordIcon: {
     marginLeft: 12,
-  },
-  imageFrame: {
-    width: '100%',
-    height: 190,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  loginImage: {
-    width: '100%',
-    height: '100%',
   },
 });

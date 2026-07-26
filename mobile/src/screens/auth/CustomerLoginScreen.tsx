@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView, Animated, Easing, Image,
+  Platform, ScrollView, Animated, Easing,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { authAPI } from '../../services/api';
@@ -24,7 +24,6 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(40)).current;
-  const float = useRef(new Animated.Value(0)).current;
   const btn1 = useRef(new Animated.Value(0)).current;
   const btn2 = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(1)).current;
@@ -40,16 +39,8 @@ export default function CustomerLoginScreen({ navigation }: any) {
       Animated.spring(btn1, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
       Animated.spring(btn2, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
     ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
   }, []);
 
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
   const btnStyle = (v: Animated.Value) => ({
     opacity: v,
     transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }) }],
@@ -135,18 +126,6 @@ export default function CustomerLoginScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
-            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 16 }}>
-              <View style={[styles.heroFrame, { backgroundColor: theme.surface, borderColor: theme.accent }]}> 
-                <Image
-                  source={require('../../../assets/tile-merchant-ireland-g2u8gq5XcwE-unsplash.jpg')}
-                  style={styles.heroImage}
-                  resizeMode="contain"
-                />
-                <View style={[styles.heroAccentBar, { backgroundColor: theme.accent }]} />
-                <View style={[styles.heroDot, { backgroundColor: theme.accent }]} />
-              </View>
-            </Animated.View>
-
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
               {mode === 'choice' ? (
                 <>
@@ -310,34 +289,5 @@ const styles = StyleSheet.create({
   choiceBtnOutline: { borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 14, borderWidth: 1.5 },
   choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
   choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
-  heroFrame: {
-    width: '100%',
-    borderRadius: 28,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.12,
-    shadowRadius: 28,
-    elevation: 8,
-  },
-  heroImage: { width: '100%', height: 220 },
-  heroAccentBar: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-    width: 60,
-    height: 6,
-    borderRadius: 3,
-  },
-  heroDot: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    opacity: 0.95,
-  },
   forgotText: { fontSize: 13, fontWeight: '600' },
 });
