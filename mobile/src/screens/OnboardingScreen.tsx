@@ -10,10 +10,10 @@ import {
   Image,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import ThemedScreen from '../components/ThemedScreen';
 
-// Adjust this path if your OnboardingScreen.tsx lives somewhere other than src/screens/
 const logo = require('../../icon.png');
 
 const slides = [
@@ -37,7 +37,6 @@ const slides = [
   },
 ];
 
-// How long each slide stays on screen before auto-advancing (ms)
 const AUTO_ADVANCE_INTERVAL = 3000;
 
 export default function OnboardingScreen({ navigation }: any) {
@@ -62,8 +61,6 @@ export default function OnboardingScreen({ navigation }: any) {
     }).start();
   }, [page, ready, transition]);
 
-  // Auto-advance through the slides on a timer, looping back to the start.
-  // This only cycles the visual slide — it never triggers navigation.
   useEffect(() => {
     const timer = setInterval(() => {
       setPage((current) => (current + 1) % slides.length);
@@ -72,8 +69,6 @@ export default function OnboardingScreen({ navigation }: any) {
     return () => clearInterval(timer);
   }, []);
 
-  // Get Started always sends the user to role selection,
-  // regardless of which slide is currently showing.
   const handleGetStarted = () => {
     navigation.navigate('RoleSelection');
   };
@@ -82,7 +77,45 @@ export default function OnboardingScreen({ navigation }: any) {
   const slideTranslate = transition.interpolate({ inputRange: [0, 1], outputRange: [16, 0] });
 
   return (
-    <ThemedScreen style={[styles.screen, { backgroundColor: theme.background }]}>
+    <ThemedScreen style={styles.screen}>
+      {/* Background gradient */}
+      <LinearGradient
+        colors={
+          isDark
+            ? [theme.background, '#221a10', theme.background]
+            : ['#FFFDF8', theme.accentLight, '#FFF7EA']
+        }
+        locations={[0, 0.55, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Decorative blobs */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <View
+          style={[
+            styles.blob,
+            {
+              top: -70,
+              right: -70,
+              backgroundColor: theme.accent,
+              opacity: isDark ? 0.12 : 0.18,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.blob,
+            styles.blobLarge,
+            {
+              bottom: -120,
+              left: -90,
+              backgroundColor: theme.accent,
+              opacity: isDark ? 0.08 : 0.12,
+            },
+          ]}
+        />
+      </View>
+
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={toggleTheme}
@@ -142,6 +175,17 @@ export default function OnboardingScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  blob: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+  },
+  blobLarge: {
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+  },
   themeToggle: {
     position: 'absolute',
     top: 16,
