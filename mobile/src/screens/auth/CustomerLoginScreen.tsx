@@ -119,6 +119,14 @@ export default function CustomerLoginScreen({ navigation }: any) {
 
   return (
     <ThemedScreen>
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        <View style={[styles.bgCircleTopLeft, { backgroundColor: theme.accent, opacity: 0.07 }]} />
+        <View style={[styles.bgCircleTopRight, { backgroundColor: theme.accent, opacity: 0.09 }]} />
+        <View style={[styles.bgCircleBottom, { backgroundColor: theme.accent, opacity: 0.06 }]} />
+        <View style={[styles.bgDotSmall1, { backgroundColor: theme.accent, opacity: 0.28 }]} />
+        <View style={[styles.bgDotSmall2, { backgroundColor: theme.accent, opacity: 0.22 }]} />
+        <View style={[styles.bgDotSmall3, { backgroundColor: theme.accent, opacity: 0.3 }]} />
+      </View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={handleBack} style={styles.back}>
@@ -330,5 +338,53 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  bgCircleTopLeft: {
+    position: 'absolute',
+    top: -70,
+    left: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+  },
+  bgCircleTopRight: {
+    position: 'absolute',
+    top: 90,
+    right: -60,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+  },
+  bgCircleBottom: {
+    position: 'absolute',
+    bottom: -90,
+    left: -50,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+  },
+  bgDotSmall1: {
+    position: 'absolute',
+    top: 240,
+    left: 36,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  bgDotSmall2: {
+    position: 'absolute',
+    top: 360,
+    right: 50,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  bgDotSmall3: {
+    position: 'absolute',
+    bottom: 140,
+    right: 90,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

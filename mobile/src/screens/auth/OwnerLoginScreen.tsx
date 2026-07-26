@@ -131,6 +131,15 @@ export default function OwnerLoginScreen({ navigation }: any) {
 
   return (
     <ThemedScreen>
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        <View style={[styles.bgDiagonalBar, { backgroundColor: c.button, opacity: 0.08 }]} />
+        <View style={[styles.bgDiamond, { backgroundColor: c.button, opacity: 0.16 }]} />
+        <View style={styles.bgChartCluster}>
+          <View style={[styles.bgChartBar, { height: 30, backgroundColor: c.button, opacity: 0.1 }]} />
+          <View style={[styles.bgChartBar, { height: 50, backgroundColor: c.button, opacity: 0.14 }]} />
+          <View style={[styles.bgChartBar, { height: 74, backgroundColor: c.button, opacity: 0.18 }]} />
+        </View>
+      </View>
       <StripeBar />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -414,5 +423,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  bgDiagonalBar: {
+    position: 'absolute',
+    top: 70,
+    right: -100,
+    width: 280,
+    height: 40,
+    borderRadius: 20,
+    transform: [{ rotate: '-16deg' }],
+  },
+  bgDiamond: {
+    position: 'absolute',
+    top: 30,
+    left: 24,
+    width: 16,
+    height: 16,
+    transform: [{ rotate: '45deg' }],
+  },
+  bgChartCluster: {
+    position: 'absolute',
+    bottom: 60,
+    left: -20,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  bgChartBar: {
+    width: 26,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
   },
 });
