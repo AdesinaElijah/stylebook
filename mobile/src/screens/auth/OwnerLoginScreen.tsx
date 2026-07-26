@@ -9,19 +9,22 @@ import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import StripeBar from '../../components/StripeBar';
+import { BRAND } from '../../theme/brand';
 
 type Mode = 'choice' | 'login' | 'signup';
 
 const PLANS = [
   { id: 'FREE', label: 'Free', price: 'GHS 0/mo', desc: '10 bookings, 3 photos, 5 posts' },
-  { id: 'PRO', label: 'Pro ⭐', price: 'GHS 120/mo', desc: 'Unlimited everything + analytics' },
+  { id: 'PRO', label: 'Pro', price: 'GHS 120/mo', desc: 'Unlimited everything + analytics' },
   { id: 'ENTERPRISE', label: 'Enterprise', price: 'GHS 300/mo', desc: 'Multi-branch + sponsored pins' },
 ];
 const CATEGORIES = ['SALON', 'BARBERSHOP', 'SPA', 'NAILS'];
 
 export default function OwnerLoginScreen({ navigation }: any) {
   const { login } = useAuth();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  const c = isDark ? BRAND.dark : BRAND.light;
   const [mode, setMode] = useState<Mode>('choice');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +36,6 @@ export default function OwnerLoginScreen({ navigation }: any) {
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(40)).current;
-  const float = useRef(new Animated.Value(0)).current;
   const btn1 = useRef(new Animated.Value(0)).current;
   const btn2 = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(1)).current;
@@ -49,16 +51,8 @@ export default function OwnerLoginScreen({ navigation }: any) {
       Animated.spring(btn1, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
       Animated.spring(btn2, { toValue: 1, friction: 8, tension: 50, useNativeDriver: true }),
     ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
   }, []);
 
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
   const btnStyle = (v: Animated.Value) => ({
     opacity: v,
     transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }) }],
@@ -137,47 +131,46 @@ export default function OwnerLoginScreen({ navigation }: any) {
 
   return (
     <ThemedScreen>
+      <StripeBar />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={handleBack} style={styles.back}>
-            <Text style={[styles.backText, { color: theme.accent }]}>← Back</Text>
+            <Text style={[styles.backText, { color: c.button }]}>← Back</Text>
           </TouchableOpacity>
 
           <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
-            <Animated.View style={{ transform: [{ translateY: floatY }], marginBottom: 8, alignItems: 'center' }}>
-              <View style={[styles.imageFrame, { backgroundColor: theme.surface }]}> 
-                <Image
-                  source={require('../../../assets/Screenshot 2026-07-24 162601.png')}
-                  resizeMode="cover"
-                  style={styles.loginImage}
-                />
-              </View>
-            </Animated.View>
+            <View style={[styles.imageFrame, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Image
+                source={require('../../../assets/Screenshot 2026-07-24 162601.png')}
+                resizeMode="cover"
+                style={styles.loginImage}
+              />
+            </View>
 
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
               {mode === 'choice' ? (
                 <>
-                  <Text style={[styles.title, { color: theme.text, textAlign: 'center' }]}>Grow your business ✂️</Text>
+                  <Text style={[styles.title, { color: theme.text, textAlign: 'center' }]}>Grow your business</Text>
                   <Text style={[styles.subtitle, { color: theme.textSecondary, textAlign: 'center' }]}>
                     How would you like to continue?
                   </Text>
 
                   <Animated.View style={btnStyle(btn1)}>
                     <TouchableOpacity
-                      style={[styles.choiceBtn, { backgroundColor: theme.accent }]}
+                      style={[styles.choiceBtn, { backgroundColor: c.button }]}
                       onPress={() => goTo('login')}
                     >
-                      <Text style={styles.choiceBtnText}>Sign In</Text>
-                      <Text style={styles.choiceBtnSub}>Welcome back</Text>
+                      <Text style={[styles.choiceBtnText, { color: c.buttonText }]}>Sign in</Text>
+                      <Text style={[styles.choiceBtnSub, { color: c.buttonText }]}>Welcome back</Text>
                     </TouchableOpacity>
                   </Animated.View>
 
                   <Animated.View style={btnStyle(btn2)}>
                     <TouchableOpacity
-                      style={[styles.choiceBtnOutline, { borderColor: theme.accent, backgroundColor: theme.surface }]}
+                      style={[styles.choiceBtnOutline, { borderColor: c.button, backgroundColor: theme.surface }]}
                       onPress={() => goTo('signup')}
                     >
-                      <Text style={[styles.choiceBtnText, { color: theme.accent }]}>Register Your Shop</Text>
+                      <Text style={[styles.choiceBtnText, { color: c.button }]}>Register your shop</Text>
                       <Text style={[styles.choiceBtnSub, { color: theme.textSecondary }]}>New here? Set up in minutes</Text>
                     </TouchableOpacity>
                   </Animated.View>
@@ -187,7 +180,7 @@ export default function OwnerLoginScreen({ navigation }: any) {
                   <Text style={[styles.title, { color: theme.text }]}>
                     {mode === 'login' ? 'Welcome back' : 'Register your shop'}
                   </Text>
-                  <Text style={[styles.subtitle, { color: theme.accent }]}>Business Owner</Text>
+                  <Text style={[styles.subtitle, { color: c.button }]}>Business Owner</Text>
 
                   {mode === 'signup' && (
                     <>
@@ -224,13 +217,13 @@ export default function OwnerLoginScreen({ navigation }: any) {
                             style={[
                               styles.categoryBtn,
                               { backgroundColor: theme.surface, borderColor: theme.border },
-                              form.category === cat && { backgroundColor: theme.accent, borderColor: theme.accent },
+                              form.category === cat && { backgroundColor: c.button, borderColor: c.button },
                             ]}
                             onPress={() => setForm({ ...form, category: cat })}
                           >
                             <Text style={[
                               styles.categoryText,
-                              { color: form.category === cat ? '#000' : theme.textSecondary },
+                              { color: form.category === cat ? c.buttonText : theme.textSecondary },
                             ]}>
                               {cat}
                             </Text>
@@ -260,13 +253,13 @@ export default function OwnerLoginScreen({ navigation }: any) {
                           style={[
                             styles.planCard,
                             { backgroundColor: theme.surface, borderColor: theme.border },
-                            form.plan === plan.id && { borderColor: theme.accent, backgroundColor: theme.accentLight },
+                            form.plan === plan.id && { borderColor: c.button, backgroundColor: theme.accentLight },
                           ]}
                           onPress={() => setForm({ ...form, plan: plan.id })}
                         >
                           <View style={styles.planRow}>
                             <Text style={[styles.planLabel, { color: theme.text }]}>{plan.label}</Text>
-                            <Text style={[styles.planPrice, { color: theme.accent }]}>{plan.price}</Text>
+                            <Text style={[styles.planPrice, { color: c.button }]}>{plan.price}</Text>
                           </View>
                           <Text style={[styles.planDesc, { color: theme.textSecondary }]}>{plan.desc}</Text>
                         </TouchableOpacity>
@@ -286,7 +279,7 @@ export default function OwnerLoginScreen({ navigation }: any) {
                   />
 
                   <Text style={[styles.label, { color: theme.textSecondary }]}>Password</Text>
-                  <View style={[styles.passwordRow, { borderColor: theme.border, backgroundColor: theme.surface }]}> 
+                  <View style={[styles.passwordRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
                     <TextInput
                       style={[styles.input, styles.passwordInput, { color: theme.text }]}
                       placeholder="••••••••"
@@ -306,19 +299,19 @@ export default function OwnerLoginScreen({ navigation }: any) {
                   </View>
 
                   <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
-                    <Text style={[styles.forgotText, { color: theme.accent }]}>Forgot password?</Text>
+                    <Text style={[styles.forgotText, { color: c.button }]}>Forgot password?</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.accent }]}
+                    style={[styles.button, { backgroundColor: c.button }]}
                     onPress={handleSubmit}
                     disabled={loading}
                   >
                     {loading ? (
-                      <ActivityIndicator color="#000" />
+                      <ActivityIndicator color={c.buttonText} />
                     ) : (
-                      <Text style={styles.buttonText}>
-                        {mode === 'login' ? 'Sign In' : 'Register Shop'}
+                      <Text style={[styles.buttonText, { color: c.buttonText }]}>
+                        {mode === 'login' ? 'Sign in' : 'Register shop'}
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -329,8 +322,8 @@ export default function OwnerLoginScreen({ navigation }: any) {
                   >
                     <Text style={[styles.toggleText, { color: theme.textSecondary }]}>
                       {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-                      <Text style={[styles.toggleLink, { color: theme.accent }]}>
-                        {mode === 'login' ? 'Register' : 'Sign In'}
+                      <Text style={[styles.toggleLink, { color: c.button }]}>
+                        {mode === 'login' ? 'Register' : 'Sign in'}
                       </Text>
                     </Text>
                   </TouchableOpacity>
@@ -345,41 +338,39 @@ export default function OwnerLoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 24, paddingTop: 60, paddingBottom: 40 },
+  scroll: { padding: 24, paddingTop: 24, paddingBottom: 40 },
   back: { marginBottom: 12 },
-  backText: { fontSize: 16 },
-  title: { fontSize: 30, fontWeight: '800', marginBottom: 4 },
+  backText: { fontSize: 16, fontWeight: '600' },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 4 },
   subtitle: { fontSize: 15, marginBottom: 28 },
   label: { fontSize: 13, marginBottom: 8, marginTop: 16 },
-  input: { borderRadius: 12, padding: 16, fontSize: 16, borderWidth: 1 },
+  input: { borderRadius: 10, padding: 16, fontSize: 16, borderWidth: 1 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  categoryBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  categoryBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1 },
   categoryText: { fontSize: 13 },
-  planCard: { borderRadius: 12, padding: 16, marginBottom: 8, borderWidth: 1 },
+  planCard: { borderRadius: 10, padding: 16, marginBottom: 8, borderWidth: 1 },
   planRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   planLabel: { fontWeight: '700' },
   planPrice: { fontWeight: '700' },
   planDesc: { fontSize: 12 },
-  button: { borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 32 },
-  buttonText: { color: '#000', fontSize: 16, fontWeight: '700' },
+  button: { borderRadius: 10, padding: 18, alignItems: 'center', marginTop: 32 },
+  buttonText: { fontSize: 16, fontWeight: '700' },
   toggle: { alignItems: 'center', marginTop: 24 },
   toggleText: { fontSize: 14 },
   toggleLink: { fontWeight: '700' },
-  choiceBtn: { borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 14 },
-  choiceBtnOutline: { borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 14, borderWidth: 1.5 },
-  choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
-  choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
+  choiceBtn: { borderRadius: 10, padding: 20, alignItems: 'center', marginTop: 14 },
+  choiceBtnOutline: { borderRadius: 10, padding: 20, alignItems: 'center', marginTop: 14, borderWidth: 1.5 },
+  choiceBtnText: { fontSize: 17, fontWeight: '700' },
+  choiceBtnSub: { fontSize: 13, marginTop: 4, opacity: 0.75 },
   forgotText: { fontSize: 13, fontWeight: '600' },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 16,
     marginTop: 4,
-    borderColor: 'red', // This will be overridden by theme.border
-    backgroundColor: 'red', // This will be overridden by theme.surface
   },
   passwordInput: {
     flex: 1,
@@ -390,16 +381,14 @@ const styles = StyleSheet.create({
   },
   passwordIcon: {
     marginLeft: 12,
-  },  imageFrame: {
-    width: 350,
-    height: 220,
-    borderRadius: 28,
+  },
+  imageFrame: {
+    width: '100%',
+    height: 190,
+    borderRadius: 14,
+    borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 10,
+    marginBottom: 16,
   },
   loginImage: {
     width: '100%',

@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import ThemedScreen from '../components/ThemedScreen';
+import StripeBar from '../components/StripeBar';
+import { BRAND } from '../theme/brand';
 
 const slides = [
   {
@@ -23,46 +25,34 @@ const slides = [
   {
     key: 'discover',
     image: require('../../assets/onboarding2.png'),
-    title: 'Discover Top Professionals',
+    title: 'Discover top professionals',
     subtitle: 'Explore nearby barbers and salons with verified reviews, pricing, availability, and directions.',
     label: 'Next',
   },
   {
     key: 'booking',
     image: require('../../assets/onboarding3.png'),
-    title: 'Book In Seconds',
+    title: 'Book in seconds',
     subtitle: 'Choose your preferred stylist, pick a time, and confirm instantly.',
     label: 'Next',
   },
   {
     key: 'confidence',
     image: require('../../assets/onboarding4.png'),
-    title: 'Look Great. Feel Confident.',
+    title: 'Look great, feel confident',
     subtitle: 'Book trusted professionals and enjoy a seamless grooming experience every time.',
-    label: 'Get Started',
+    label: 'Get started',
   },
 ];
 
 export default function OnboardingScreen({ navigation }: any) {
   const { theme, isDark } = useTheme();
+  const c = isDark ? BRAND.dark : BRAND.light;
   const [page, setPage] = useState(0);
   const [ready, setReady] = useState(false);
   const { width: screenWidth } = useWindowDimensions();
 
   const transition = useRef(new Animated.Value(1)).current;
-  const floatAnim = useRef(new Animated.Value(0)).current;
-
-  const accent = theme.accent;
-  const buttonTextColor = isDark ? '#000' : '#FFFFFF';
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, { toValue: -8, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
-  }, [floatAnim]);
 
   useEffect(() => {
     if (!ready) {
@@ -92,25 +82,21 @@ export default function OnboardingScreen({ navigation }: any) {
   const slideTranslate = transition.interpolate({ inputRange: [0, 1], outputRange: [24, 0] });
 
   return (
-    <ThemedScreen style={[styles.screen, { backgroundColor: theme.background }]}> 
+    <ThemedScreen style={[styles.screen, { backgroundColor: theme.background }]}>
       <ImageBackground source={slides[page].image} resizeMode="cover" style={styles.background}>
         <View style={styles.overlay} />
 
         <View style={styles.topBar}>
+          <StripeBar height={5} />
           <TouchableOpacity onPress={handleSkip} activeOpacity={0.8} style={styles.skipButton}>
-            <Text style={[styles.skipText, { color: '#333' }]}>Skip</Text>
+            <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
         </View>
 
-        <Animated.View style={[styles.content, { opacity: slideOpacity, transform: [{ translateY: slideTranslate }] }]}> 
+        <Animated.View style={[styles.content, { opacity: slideOpacity, transform: [{ translateY: slideTranslate }] }]}>
           <View style={{ maxWidth: '90%' }}>
-            <Text style={[styles.heading, {
-              color: '#FFFFFF',
-              textShadowColor: 'rgba(0,0,0,0.16)',
-              textShadowOffset: { width: 0, height: 2 },
-              textShadowRadius: 6,
-            }]}>{slides[page].title}</Text>
-            <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.9)', marginBottom: 12 }]}>{slides[page].subtitle}</Text>
+            <Text style={styles.heading}>{slides[page].title}</Text>
+            <Text style={styles.subtitle}>{slides[page].subtitle}</Text>
           </View>
 
           <View style={styles.footerBlock}>
@@ -121,8 +107,8 @@ export default function OnboardingScreen({ navigation }: any) {
                   style={[
                     styles.indicator,
                     {
-                      backgroundColor: index === page ? accent : theme.textTertiary,
-                      width: index === page ? 32 : 10,
+                      backgroundColor: index === page ? c.button : 'rgba(255,255,255,0.4)',
+                      width: index === page ? 28 : 8,
                     },
                   ]}
                 />
@@ -132,9 +118,9 @@ export default function OnboardingScreen({ navigation }: any) {
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={handleNext}
-              style={[styles.actionButton, { backgroundColor: accent, width: screenWidth - 60 }]}
+              style={[styles.actionButton, { backgroundColor: c.button, width: screenWidth - 60 }]}
             >
-              <Text style={[styles.actionText, { color: buttonTextColor }]}>{slides[page].label}</Text>
+              <Text style={[styles.actionText, { color: c.buttonText }]}>{slides[page].label}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -145,29 +131,23 @@ export default function OnboardingScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  topBar: { paddingHorizontal: 24, paddingTop: 24, flexDirection: 'row', justifyContent: 'flex-end', zIndex: 2 },
-  skipButton: { padding: 12 },
-  skipText: { fontSize: 14, fontWeight: '600' },
+  topBar: { flexDirection: 'row', alignItems: 'flex-start', zIndex: 2 },
+  skipButton: { padding: 12, marginLeft: 'auto', marginRight: 12, marginTop: 12 },
+  skipText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
   background: { flex: 1, justifyContent: 'space-between' },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'transparent' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.15)' },
   content: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 },
-  copyBlock: { maxWidth: '90%', paddingBottom: 24 },
-  heading: { fontSize: 36, fontWeight: '900', lineHeight: 44, marginBottom: 14 },
-  subtitle: { fontSize: 16, lineHeight: 24 },
-  footerBlock: { paddingBottom: 12 },
-  indicatorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
-  indicator: { height: 10, borderRadius: 5, marginHorizontal: 6 },
+  heading: { fontSize: 32, fontWeight: '700', lineHeight: 38, marginBottom: 12, color: '#FFFFFF' },
+  subtitle: { fontSize: 15, lineHeight: 22, color: 'rgba(255,255,255,0.88)' },
+  footerBlock: { paddingBottom: 12, marginTop: 24 },
+  indicatorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, gap: 6 },
+  indicator: { height: 6, borderRadius: 3 },
   actionButton: {
     alignSelf: 'center',
-    height: 58,
-    borderRadius: 28,
+    height: 54,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 8,
   },
-  actionText: { fontSize: 16, fontWeight: '800', letterSpacing: 0.4 },
+  actionText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
 });
