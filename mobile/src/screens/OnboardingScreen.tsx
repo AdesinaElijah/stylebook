@@ -78,40 +78,28 @@ export default function OnboardingScreen({ navigation }: any) {
 
   return (
     <ThemedScreen style={styles.screen}>
-      {/* Background gradient */}
       <LinearGradient
         colors={
           isDark
-            ? [theme.background, '#221a10', theme.background]
-            : ['#FFFDF8', theme.accentLight, '#FFF7EA']
+            ? ['#0F0B06', '#2E2013', '#1a1410']
+            : ['#F3DBAE', '#E0A94F', '#F0C983']
         }
-        locations={[0, 0.55, 1]}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Decorative blobs */}
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
         <View
           style={[
             styles.blob,
-            {
-              top: -70,
-              right: -70,
-              backgroundColor: theme.accent,
-              opacity: isDark ? 0.12 : 0.18,
-            },
+            { top: -70, right: -70, backgroundColor: '#B87F14', opacity: isDark ? 0.25 : 0.4 },
           ]}
         />
         <View
           style={[
             styles.blob,
             styles.blobLarge,
-            {
-              bottom: -120,
-              left: -90,
-              backgroundColor: theme.accent,
-              opacity: isDark ? 0.08 : 0.12,
-            },
+            { bottom: -120, left: -90, backgroundColor: '#B87F14', opacity: isDark ? 0.18 : 0.3 },
           ]}
         />
       </View>
