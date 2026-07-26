@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
 import { BRAND } from '../../theme/brand';
+import StripeBar from '../../components/StripeBar'; 
 
 type Mode = 'choice' | 'login' | 'signup';
 
