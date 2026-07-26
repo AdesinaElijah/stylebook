@@ -9,7 +9,6 @@ import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
-import StripeBar from '../../components/StripeBar';
 import { BRAND } from '../../theme/brand';
 
 type Mode = 'choice' | 'login' | 'signup';

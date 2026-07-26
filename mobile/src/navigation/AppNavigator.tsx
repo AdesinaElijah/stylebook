@@ -7,7 +7,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 // Auth Screens
-import WelcomeScreen from '../screens/WelcomeScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
 import CustomerLoginScreen from '../screens/auth/CustomerLoginScreen';
 import OwnerLoginScreen from '../screens/auth/OwnerLoginScreen';
@@ -159,7 +158,6 @@ export default function AppNavigator() {
         {!user ? (
           <>
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-            <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
             <Stack.Screen name="CustomerLogin" component={CustomerLoginScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

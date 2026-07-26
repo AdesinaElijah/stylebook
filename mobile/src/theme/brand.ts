@@ -1,28 +1,20 @@
 export const BRAND = {
   dark: {
-    bg: '#221912',
-    card: '#2E2419',
-    text: '#EDE6D6',
-    textSecondary: '#B8AC98',
-    textMuted: '#7A6F5C',
-    button: '#C89B3C',
-    buttonText: '#2C1F0F',
+    bg: '#2A1D12',
+    card: '#3A2A1A',
+    text: '#F5E6D3',
+    textSecondary: '#D9C4A3',
+    textMuted: '#A98F6B',
+    button: '#D4A017',
+    buttonText: '#1F1508',
   },
   light: {
-    bg: '#F5EFE3',
-    card: '#E9DCC2',
-    text: '#2C1F0F',
-    textSecondary: '#6B5D46',
-    textMuted: '#8A7F6C',
-    button: '#C89B3C',
-    buttonText: '#2C1F0F',
+    bg: '#F3E3CC',
+    card: '#EAD3AE',
+    text: '#3A2413',
+    textSecondary: '#7A5B3A',
+    textMuted: '#9C815F',
+    button: '#D4A017',
+    buttonText: '#1F1508',
   },
 };
-
-export const STRIPES = [
-  { flex: 2, color: '#C89B3C' },
-  { flex: 1, color: '#A8492E' },
-  { flex: 1, color: '#2F4A3A' },
-  { flex: 3, color: '#C89B3C' },
-  { flex: 1, color: '#A8492E' },
-];
