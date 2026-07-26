@@ -129,6 +129,14 @@ export default function CustomerLoginScreen({ navigation }: any) {
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
               {mode === 'choice' ? (
                 <>
+                  <View style={styles.decorWrap}>
+                    <View style={[styles.decorCircleBack, { backgroundColor: theme.accent, opacity: 0.12 }]} />
+                    <View style={[styles.decorCircleAccent, { backgroundColor: theme.accent, opacity: 0.22 }]} />
+                    <View style={[styles.decorBadge, { borderColor: theme.accent, backgroundColor: theme.surface }]}>
+                      <Ionicons name="person" size={32} color={theme.accent} />
+                    </View>
+                  </View>
+
                   <Text style={[styles.title, { color: theme.text, textAlign: 'center' }]}>Hello there 👋</Text>
                   <Text style={[styles.subtitle, { color: theme.textSecondary, textAlign: 'center' }]}>
                     How would you like to continue?
@@ -290,4 +298,37 @@ const styles = StyleSheet.create({
   choiceBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
   choiceBtnSub: { color: 'rgba(0,0,0,0.55)', fontSize: 13, marginTop: 4 },
   forgotText: { fontSize: 13, fontWeight: '600' },
+  decorWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 120,
+    marginBottom: 8,
+  },
+  decorCircleBack: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+  },
+  decorCircleAccent: {
+    position: 'absolute',
+    top: 6,
+    right: '28%',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+  },
+  decorBadge: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
 });

@@ -142,6 +142,14 @@ export default function OwnerLoginScreen({ navigation }: any) {
             <Animated.View style={{ opacity: contentFade, transform: [{ translateY: contentSlide }] }}>
               {mode === 'choice' ? (
                 <>
+                  <View style={styles.decorWrap}>
+                    <View style={[styles.decorCircleBack, { backgroundColor: c.button, opacity: 0.12 }]} />
+                    <View style={[styles.decorCircleAccent, { backgroundColor: c.button, opacity: 0.22 }]} />
+                    <View style={[styles.decorBadge, { borderColor: c.button, backgroundColor: theme.surface }]}>
+                      <Ionicons name="trending-up" size={32} color={c.button} />
+                    </View>
+                  </View>
+
                   <Text style={[styles.title, { color: theme.text, textAlign: 'center' }]}>Grow your business</Text>
                   <Text style={[styles.subtitle, { color: theme.textSecondary, textAlign: 'center' }]}>
                     How would you like to continue?
@@ -373,5 +381,38 @@ const styles = StyleSheet.create({
   },
   passwordIcon: {
     marginLeft: 12,
+  },
+  decorWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 120,
+    marginBottom: 8,
+  },
+  decorCircleBack: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+  },
+  decorCircleAccent: {
+    position: 'absolute',
+    top: 6,
+    right: '28%',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+  },
+  decorBadge: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
 });
