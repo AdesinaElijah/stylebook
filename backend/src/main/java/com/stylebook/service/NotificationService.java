@@ -23,7 +23,6 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final PushNotificationService pushNotificationService;
 
     @Transactional
     public Notification createNotification(UUID userId,
@@ -47,7 +46,6 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         messagingTemplate.convertAndSend("/topic/notifications/" + userId, saved);
-        pushNotificationService.sendPushIfConfigured(saved);
         return saved;
     }
 

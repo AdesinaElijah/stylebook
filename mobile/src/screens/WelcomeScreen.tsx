@@ -43,8 +43,8 @@ export default function WelcomeScreen({ navigation }: any) {
         style={styles.background}
       >
         <LinearGradient
-          colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.55)']}
-          locations={[0, 0.5, 1]}
+          colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.75)']}
+          locations={[0, 0.45, 1]}
           style={StyleSheet.absoluteFillObject}
         />
 
