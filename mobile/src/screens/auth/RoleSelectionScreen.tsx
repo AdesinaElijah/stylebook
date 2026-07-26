@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
 import { BRAND } from '../../theme/brand';
@@ -30,7 +31,6 @@ function RoleCard({ icon, title, desc, tag, tagColor, surfaceColor, translateX, 
         onPress={onPress}
         style={[styles.card, { borderTopColor: tagColor, backgroundColor: surfaceColor }]}
       >
-        {/* Decorative geometric pattern instead of a photo */}
         <View style={[styles.patternCircleLarge, { backgroundColor: tagColor, opacity: 0.14 }]} />
         <View style={[styles.patternCircleSmall, { backgroundColor: tagColor, opacity: 0.10 }]} />
 
@@ -120,7 +120,33 @@ export default function RoleSelectionScreen({ navigation }: any) {
   };
 
   return (
-    <ThemedScreen>
+    <ThemedScreen style={styles.screen}>
+      <LinearGradient
+        colors={
+          isDark
+            ? ['#0F0B06', '#2E2013', '#1a1410']
+            : ['#F3DBAE', '#E0A94F', '#F0C983']
+        }
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <View
+          style={[
+            styles.blob,
+            { top: -70, right: -70, backgroundColor: '#B87F14', opacity: isDark ? 0.25 : 0.4 },
+          ]}
+        />
+        <View
+          style={[
+            styles.blob,
+            styles.blobLarge,
+            { bottom: -120, left: -90, backgroundColor: '#B87F14', opacity: isDark ? 0.18 : 0.3 },
+          ]}
+        />
+      </View>
+
       <StripeBar />
       <Animated.View style={[styles.container, { opacity: screenFade }]}>
         <Animated.View style={{ opacity: titleFade, transform: [{ translateY: titleSlide }], alignItems: 'center' }}>
@@ -168,6 +194,18 @@ export default function RoleSelectionScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  blob: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+  },
+  blobLarge: {
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+  },
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 32, paddingBottom: 24 },
   title: { fontSize: 26, fontWeight: '700', letterSpacing: 0.2 },
   subtitle: { fontSize: 14, marginTop: 8, textAlign: 'center', paddingHorizontal: 20, lineHeight: 20 },
