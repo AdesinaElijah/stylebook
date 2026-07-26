@@ -6,6 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
 import { BRAND } from '../../theme/brand';
+import StripeBar from '../components/StripeBar';
 
 const { width } = Dimensions.get('window');
 
