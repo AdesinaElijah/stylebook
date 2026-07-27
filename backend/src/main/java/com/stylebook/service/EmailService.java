@@ -24,28 +24,28 @@ public class EmailService {
     @Value("${stylebook.app.name}")
     private String appName;
 
-    @Value("${resend.api.key}")
-    private String resendApiKey;
+    @Value("${sendgrid.api.key}")
+    private String sendGridApiKey;
 
-    @Value("${resend.from.address}")
+    @Value("${sendgrid.from.address}")
     private String fromAddress;
 
-    private static final String RESEND_API_URL = "https://api.resend.com/emails";
+    private static final String SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
 
-    private void sendViaResend(String to, String subject, String textBody) {
+    private void sendViaSendGrid(String to, String subject, String textBody) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(resendApiKey);
+        headers.setBearerAuth(sendGridApiKey);
 
         Map<String, Object> payload = Map.of(
-            "from", appName + " <" + fromAddress + ">",
-            "to", List.of(to),
+            "personalizations", List.of(Map.of("to", List.of(Map.of("email", to)))),
+            "from", Map.of("email", fromAddress, "name", appName),
             "subject", subject,
-            "text", textBody
+            "content", List.of(Map.of("type", "text/plain", "value", textBody))
         );
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-        restTemplate.postForEntity(RESEND_API_URL, request, String.class);
+        restTemplate.postForEntity(SENDGRID_API_URL, request, String.class);
     }
 
     @org.springframework.scheduling.annotation.Async
@@ -63,7 +63,7 @@ public class EmailService {
             "The " + appName + " Team\n" +
             appName + " — Book your next look in seconds";
 
-        sendViaResend(user.getEmail(), subject, body);
+        sendViaSendGrid(user.getEmail(), subject, body);
     }
 
     public void sendVerificationEmail(User user) {
@@ -76,7 +76,7 @@ public class EmailService {
             "If you did not create an account, please ignore this email.\n\n" +
             "The StyleBook Team";
 
-        sendViaResend(user.getEmail(), subject, body);
+        sendViaSendGrid(user.getEmail(), subject, body);
     }
 
     public void sendBookingConfirmationEmail(String toEmail, String customerName,
@@ -93,7 +93,7 @@ public class EmailService {
             "We look forward to seeing you!\n\n" +
             "The StyleBook Team";
 
-        sendViaResend(toEmail, subject, body);
+        sendViaSendGrid(toEmail, subject, body);
     }
 
     public void sendBookingCancellationEmail(String toEmail, String customerName,
@@ -106,6 +106,6 @@ public class EmailService {
             "You can rebook anytime through the StyleBook app.\n\n" +
             "The StyleBook Team";
 
-        sendViaResend(toEmail, subject, body);
+        sendViaSendGrid(toEmail, subject, body);
     }
 }
