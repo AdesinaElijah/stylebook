@@ -12,6 +12,7 @@ import CustomerLoginScreen from '../screens/auth/CustomerLoginScreen';
 import OwnerLoginScreen from '../screens/auth/OwnerLoginScreen';
 import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 // Customer Screens
 import HomeScreen from '../screens/customer/HomeScreen';
@@ -161,6 +162,7 @@ export default function AppNavigator() {
             <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
             <Stack.Screen name="CustomerLogin" component={CustomerLoginScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             <Stack.Screen name="OwnerLogin" component={OwnerLoginScreen} />
             <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
           </>

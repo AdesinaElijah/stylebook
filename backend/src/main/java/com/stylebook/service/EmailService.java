@@ -79,6 +79,20 @@ public class EmailService {
         sendViaSendGrid(user.getEmail(), subject, body);
     }
 
+    public void sendPasswordResetEmail(User user, String code) {
+        String subject = appName + " - Reset your password";
+        String body =
+            "Hi " + user.getFullName() + ",\n\n" +
+            "We received a request to reset your " + appName + " password.\n\n" +
+            "Enter this code in the app to set a new password:\n\n" +
+            "        " + code + "\n\n" +
+            "The code is valid for the next 10 minutes. If you did not request a password reset, " +
+            "you can safely ignore this message — your password will remain unchanged.\n\n" +
+            "The " + appName + " Team";
+
+        sendViaSendGrid(user.getEmail(), subject, body);
+    }
+
     public void sendBookingConfirmationEmail(String toEmail, String customerName,
                                               String shopName, String serviceName,
                                               String date, String time) {

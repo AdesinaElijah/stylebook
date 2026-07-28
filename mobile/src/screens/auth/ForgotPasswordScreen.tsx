@@ -14,14 +14,12 @@ export default function ForgotPasswordScreen({ navigation }: any) {
     setLoading(true);
     try {
       await authAPI.forgotPassword({ email: email.trim() });
-      Alert.alert('If an account exists', 'If that email is registered, you will receive password reset instructions.');
-      navigation.goBack();
     } catch (error: any) {
-      // Show a generic success-like message so we don't leak account existence
-      Alert.alert('If an account exists', 'If that email is registered, you will receive password reset instructions.');
-      navigation.goBack();
+      // Swallow errors here too — don't leak whether the account exists
     } finally {
       setLoading(false);
+      Alert.alert('Check your email', 'If that email is registered, a reset code is on its way. Don\'t forget to check spam.');
+      navigation.navigate('ResetPassword', { email: email.trim() });
     }
   };
 

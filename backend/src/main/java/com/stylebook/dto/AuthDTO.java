@@ -77,6 +77,27 @@ public class AuthDTO {
     }
 
     @Data
+    public static class ForgotPasswordRequest {
+        @NotBlank
+        @Email
+        private String email;
+    }
+
+    @Data
+    public static class ResetPasswordRequest {
+        @NotBlank
+        @Email
+        private String email;
+
+        @NotBlank
+        private String code;
+
+        @NotBlank
+        @Size(min = 6)
+        private String newPassword;
+    }
+
+    @Data
     public static class AuthResponse {
         private String token;
         private String role;

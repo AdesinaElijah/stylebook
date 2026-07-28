@@ -200,4 +200,52 @@ public class AuthService {
         issueAndSendOtp(user);
         return new MessageResponse("A new verification code is on its way to your email.");
     }
+
+    // --- Password reset ------------------------------------------------
+
+    @Transactional
+    public MessageResponse forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+
+        if (user == null) {
+            return new MessageResponse("If that email is registered, you will receive password reset instructions.");
+        }
+
+        String code = generateOtp();
+        user.setPasswordResetToken(code);
+        user.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(OTP_VALID_MINUTES));
+        userRepository.save(user);
+
+        emailService.sendPasswordResetEmail(user, code);
+
+        return new MessageResponse("If that email is registered, you will receive password reset instructions.");
+    }
+
+    @Transactional
+    public MessageResponse resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired code"));
+
+        String storedCode = user.getPasswordResetToken();
+        LocalDateTime expiry = user.getPasswordResetTokenExpiry();
+
+        if (storedCode == null || expiry == null) {
+            throw new RuntimeException("Invalid or expired code");
+        }
+
+        if (LocalDateTime.now().isAfter(expiry)) {
+            throw new RuntimeException("This code has expired. Please request a new one.");
+        }
+
+        if (!storedCode.equals(request.getCode())) {
+            throw new RuntimeException("Incorrect verification code");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetTokenExpiry(null);
+        userRepository.save(user);
+
+        return new MessageResponse("Your password has been reset successfully. You can now sign in.");
+    }
 }
