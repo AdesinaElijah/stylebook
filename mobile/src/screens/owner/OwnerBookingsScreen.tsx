@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  FlatList, ActivityIndicator, Alert, RefreshControl,
+  FlatList, ActivityIndicator, Alert, RefreshControl, Modal, Pressable,
 } from 'react-native';
 import { bookingsAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
@@ -13,6 +13,10 @@ export default function OwnerBookingsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('upcoming');
+
+  // The booking whose payment is being recorded, or null when the sheet is closed.
+  const [payingFor, setPayingFor] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadBookings();
@@ -66,28 +70,34 @@ export default function OwnerBookingsScreen() {
    * terminal, and this just logs which. The amount defaults to the listed price, so the
    * common case is two taps. The customer gets a receipt notification either way.
    */
-  const markPaid = (booking: any) => {
-    const record = async (method: string) => {
-      try {
-        await bookingsAPI.recordPayment(booking.id, { method });
-        loadBookings();
-        Alert.alert('Payment recorded', `${booking.customerName} has been sent a receipt.`);
-      } catch (error: any) {
-        Alert.alert('Error', error.response?.data?.error || 'Failed to record payment');
-      }
-    };
+  /**
+   * Records payment taken at the shop.
+   *
+   * Uses a sheet rather than Alert.alert because Android caps alerts at three buttons and
+   * silently drops any beyond that — with cancel plus three payment methods, Card vanished.
+   */
+  const recordPayment = async (method: string) => {
+    if (!payingFor || saving) return;
 
-    Alert.alert(
-      'Record Payment',
-      `GHS ${booking.servicePrice} for ${booking.serviceName}\n\nHow did ${booking.customerName} pay?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Cash', onPress: () => record('CASH') },
-        { text: 'Mobile Money', onPress: () => record('MOBILE_MONEY') },
-        { text: 'Card', onPress: () => record('CARD') },
-      ]
-    );
+    setSaving(true);
+    try {
+      await bookingsAPI.recordPayment(payingFor.id, { method });
+      const name = payingFor.customerName;
+      setPayingFor(null);
+      loadBookings();
+      Alert.alert('Payment recorded', `${name} has been sent a receipt.`);
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to record payment');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const PAYMENT_METHODS = [
+    { key: 'CASH', label: 'Cash', icon: '💵' },
+    { key: 'MOBILE_MONEY', label: 'Mobile Money', icon: '📱' },
+    { key: 'CARD', label: 'Card', icon: '💳' },
+  ];
 
   const deleteBooking = async (id: string) => {
     try {
@@ -187,7 +197,7 @@ export default function OwnerBookingsScreen() {
           {item.paymentStatus !== 'PAID' && (
             <TouchableOpacity
               style={[styles.payBtn, { backgroundColor: theme.accentLight }]}
-              onPress={() => markPaid(item)}
+              onPress={() => setPayingFor(item)}
             >
               <Text style={styles.payBtnText}>💵 Mark Paid</Text>
             </TouchableOpacity>
@@ -202,7 +212,7 @@ export default function OwnerBookingsScreen() {
       {item.status === 'COMPLETED' && item.paymentStatus !== 'PAID' && (
         <TouchableOpacity
           style={[styles.payBtn, { backgroundColor: theme.accentLight }]}
-          onPress={() => markPaid(item)}
+          onPress={() => setPayingFor(item)}
         >
           <Text style={styles.payBtnText}>💵 Mark Paid</Text>
         </TouchableOpacity>
@@ -268,6 +278,49 @@ export default function OwnerBookingsScreen() {
           }
         />
       )}
+
+      {/* Payment method sheet. A Modal rather than Alert.alert, which drops buttons past the third on Android. */}
+      <Modal
+        visible={payingFor !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPayingFor(null)}
+      >
+        <Pressable style={styles.sheetOverlay} onPress={() => !saving && setPayingFor(null)} />
+        <View style={[styles.sheet, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.sheetTitle, { color: theme.text }]}>Record Payment</Text>
+          <Text style={[styles.sheetSub, { color: theme.textSecondary }]}>
+            GHS {payingFor?.servicePrice} for {payingFor?.serviceName}
+          </Text>
+          <Text style={[styles.sheetSub, { color: theme.textSecondary, marginBottom: 16 }]}>
+            How did {payingFor?.customerName} pay?
+          </Text>
+
+          {saving ? (
+            <ActivityIndicator color={theme.accent} style={{ paddingVertical: 24 }} />
+          ) : (
+            PAYMENT_METHODS.map((method) => (
+              <TouchableOpacity
+                key={method.key}
+                style={[styles.methodBtn, { borderColor: theme.border }]}
+                onPress={() => recordPayment(method.key)}
+              >
+                <Text style={[styles.methodText, { color: theme.text }]}>
+                  {method.icon}  {method.label}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
+
+          <TouchableOpacity
+            style={styles.sheetCancel}
+            onPress={() => setPayingFor(null)}
+            disabled={saving}
+          >
+            <Text style={[styles.sheetCancelText, { color: theme.textSecondary }]}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </ThemedScreen>
   );
 }
@@ -298,6 +351,20 @@ const styles = StyleSheet.create({
   payBtn: { flex: 1, borderRadius: 8, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#4CAF50' },
   payBtnText: { color: '#4CAF50', fontWeight: '700' },
   paidLine: { fontSize: 13, color: '#4CAF50', fontWeight: '600', marginTop: 2 },
+  sheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: {
+    position: 'absolute', left: 20, right: 20, top: '28%',
+    borderRadius: 20, padding: 24,
+  },
+  sheetTitle: { fontSize: 19, fontWeight: '800', marginBottom: 10 },
+  sheetSub: { fontSize: 14, lineHeight: 20 },
+  methodBtn: {
+    borderRadius: 12, borderWidth: 1, paddingVertical: 15,
+    paddingHorizontal: 16, marginBottom: 10,
+  },
+  methodText: { fontSize: 15, fontWeight: '600' },
+  sheetCancel: { paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  sheetCancelText: { fontSize: 15, fontWeight: '600' },
   deleteBtn: { borderRadius: 8, padding: 12, alignItems: 'center', borderWidth: 1 },
   deleteBtnText: { fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 60 },
