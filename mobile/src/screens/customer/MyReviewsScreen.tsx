@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet,
+  View, Text, StyleSheet, TouchableOpacity,
   FlatList, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { reviewsAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
 
-export default function MyReviewsScreen() {
+export default function MyReviewsScreen({ navigation }: any) {
   const { theme } = useTheme();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,9 @@ export default function MyReviewsScreen() {
   return (
     <ThemedScreen>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+          <Text style={[styles.backText, { color: theme.accent }]}>← Back</Text>
+        </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>My Reviews</Text>
       </View>
 
@@ -84,6 +87,7 @@ export default function MyReviewsScreen() {
 
 const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 16 },
+  backText: { fontSize: 16, marginBottom: 12 },
   title: { fontSize: 28, fontWeight: '900' },
   list: { padding: 20 },
   reviewCard: {

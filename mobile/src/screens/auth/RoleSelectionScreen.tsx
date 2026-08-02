@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
@@ -92,11 +93,10 @@ export default function RoleSelectionScreen({ navigation }: any) {
     ]).start();
   };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', playEntrance);
-    playEntrance();
-    return unsubscribe;
-  }, [navigation]);
+  // Replays every time the screen regains focus, which is what rebuilds the screen after
+  // the user backs out of a login screen. useFocusEffect is used rather than a manual
+  // 'focus' listener because it also runs on first mount, so there is one code path.
+  useFocusEffect(useCallback(() => { playEntrance(); }, []));
 
   const choose = (role: 'customer' | 'owner') => {
     const pressedScale = role === 'customer' ? customerScale : ownerScale;
@@ -113,9 +113,11 @@ export default function RoleSelectionScreen({ navigation }: any) {
       }),
       Animated.timing(titleFade, { toValue: 0, duration: 280, useNativeDriver: true }),
     ]).start(() => {
-      Animated.timing(screenFade, { toValue: 0, duration: 160, useNativeDriver: true }).start(() => {
-        navigation.navigate(role === 'customer' ? 'CustomerLogin' : 'OwnerLogin');
-      });
+      // Deliberately no whole-screen fade before navigating. Fading the container to
+      // opacity 0 left this screen invisible when the user came back to it — and an
+      // invisible view still receives touches, so the only way forward was tapping blind
+      // until you happened to hit a card.
+      navigation.navigate(role === 'customer' ? 'CustomerLogin' : 'OwnerLogin');
     });
   };
 
