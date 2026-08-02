@@ -1,4 +1,9 @@
 export const BRAND = {
+  // Core palette. StripeBar reads these directly; the theme objects below build on them.
+  gold: '#C9A227',
+  brown: '#6B4226',
+  cream: '#F5EDE0',
+
   dark: {
     bg: '#2A1D12',
     card: '#3A2A1A',

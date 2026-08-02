@@ -64,7 +64,12 @@ export default function ShopProfileScreen({ route, navigation }: any) {
         title: shop?.name,
       });
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.error || 'Could not open chat');
+      // GlobalExceptionHandler puts the real cause in `details` on a 500 and only a generic
+      // string in `error`. Show both, otherwise the useful half is silently discarded.
+      const data = error.response?.data;
+      const message = [data?.error, data?.details].filter(Boolean).join('\n\n');
+      console.log('openChat failed:', error.response?.status, data);
+      Alert.alert('Error', message || 'Could not open chat');
     }
   };
 
