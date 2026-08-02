@@ -14,6 +14,9 @@ import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
+// Messaging (shared by both roles)
+import ConversationsScreen from '../screens/ConversationsScreen';
+import ChatScreen from '../screens/ChatScreen';
 // Customer Screens
 import HomeScreen from '../screens/customer/HomeScreen';
 import ShopProfileScreen from '../screens/customer/ShopProfileScreen';
@@ -75,6 +78,14 @@ function CustomerTabs() {
         }}
       />
       <Tab.Screen
+        name="Messages"
+        component={ConversationsScreen}
+        options={{
+          tabBarLabel: 'Messages',
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
         name="Profile"
         component={CustomerProfileScreen}
         options={{
@@ -117,6 +128,14 @@ function OwnerTabs() {
         }}
       />
       <Tab.Screen
+        name="OwnerMessages"
+        component={ConversationsScreen}
+        options={{
+          tabBarLabel: 'Messages',
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
         name="OwnerProfile"
         component={OwnerProfileScreen}
         options={{
@@ -139,6 +158,15 @@ function OwnerTabs() {
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
   const { theme } = useTheme();
+
+  // Chat is the one screen that shows a header — the title is the person or shop
+  // you're talking to, which ChatScreen sets once it has the route params.
+  const chatScreenOptions = {
+    headerShown: true,
+    headerStyle: { backgroundColor: theme.background },
+    headerTintColor: theme.text,
+    headerTitleStyle: { fontWeight: '800' as const },
+  };
 
   if (isLoading) {
     return (
@@ -174,6 +202,7 @@ export default function AppNavigator() {
             <Stack.Screen name="SavedShops" component={SavedShopsScreen} />
             <Stack.Screen name="MyReviews" component={MyReviewsScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} options={chatScreenOptions} />
           </>
         ) : (
           <>
@@ -181,6 +210,7 @@ export default function AppNavigator() {
             <Stack.Screen name="CreatePost" component={CreatePostScreen} />
             <Stack.Screen name="OwnerReviews" component={OwnerReviewsScreen} />
             <Stack.Screen name="OpeningHours" component={OpeningHoursScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} options={chatScreenOptions} />
           </>
         )}
       </Stack.Navigator>

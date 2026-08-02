@@ -8,12 +8,14 @@ import com.stylebook.entity.Shop;
 import com.stylebook.entity.User;
 import com.stylebook.event.BookingRequestedEvent;
 import com.stylebook.event.BookingStatusChangedEvent;
+import com.stylebook.event.PaymentReceivedEvent;
 import com.stylebook.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -153,6 +155,81 @@ public class BookingService {
         }
 
         return BookingDTO.BookingResponse.from(booking);
+    }
+
+    /**
+     * Records that the customer has settled up, and sends them a receipt.
+     *
+     * <p>StyleBook doesn't process money — payment happens at the shop in cash, over mobile
+     * money, or on a card terminal. What this does is give the shop a record of what was
+     * collected and give the customer written confirmation, which is the part people
+     * actually argue about later.
+     *
+     * <p>Only the shop owner can call this, and only once per booking: marking an
+     * already-paid booking paid again would fire a second receipt for money that was never
+     * collected twice.
+     */
+    @Transactional
+    public BookingDTO.BookingResponse recordPayment(UUID ownerId,
+                                                    UUID bookingId,
+                                                    BookingDTO.RecordPaymentRequest request) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getShop().getOwner().getId().equals(ownerId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+        if (booking.getPaymentStatus() == Booking.PaymentStatus.PAID) {
+            throw new RuntimeException("This booking is already marked as paid");
+        }
+        if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+            throw new RuntimeException("Cannot record payment for a cancelled booking");
+        }
+
+        // Default to the listed price — the usual case is a standard appointment paid in full.
+        BigDecimal amount = request != null && request.getAmount() != null
+                ? request.getAmount()
+                : booking.getService().getPrice();
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Payment amount must be greater than zero");
+        }
+
+        booking.setPaymentStatus(Booking.PaymentStatus.PAID);
+        booking.setPaymentMethod(parsePaymentMethod(request != null ? request.getMethod() : null));
+        booking.setAmountPaid(amount);
+        booking.setPaidAt(LocalDateTime.now());
+
+        // A paid appointment is a finished one, unless it was already marked otherwise.
+        if (booking.getStatus() == Booking.BookingStatus.CONFIRMED
+                || booking.getStatus() == Booking.BookingStatus.PENDING) {
+            booking.setStatus(Booking.BookingStatus.COMPLETED);
+        }
+        booking.setUpdatedAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+
+        // Receipt goes to the customer — the owner already knows, they just took the money.
+        eventPublisher.publishEvent(new PaymentReceivedEvent(
+                booking.getCustomer().getId(),
+                booking.getId(),
+                booking.getShop().getName(),
+                booking.getService().getName(),
+                amount.doubleValue()
+        ));
+
+        return BookingDTO.BookingResponse.from(booking);
+    }
+
+    /** Falls back to cash, which is what most Ghanaian salons still take. */
+    private Booking.PaymentMethod parsePaymentMethod(String method) {
+        if (method == null || method.isBlank()) {
+            return Booking.PaymentMethod.CASH;
+        }
+        try {
+            return Booking.PaymentMethod.valueOf(method.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Unknown payment method: " + method);
+        }
     }
 
     @Transactional

@@ -22,8 +22,20 @@ import java.util.UUID;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationPreferencesService preferencesService;
+    private final PushNotificationService pushNotificationService;
     private final SimpMessagingTemplate messagingTemplate;
 
+    /**
+     * Records a notification and fans it out over the requested channels.
+     *
+     * <p>The user's settings are honoured here rather than at each call site, so listeners
+     * stay dumb: if the user has muted this category the method returns {@code null} and
+     * nothing is stored or delivered. Muting push alone does not suppress the record — the
+     * PUSH channel is simply dropped and the notification still reaches the in-app bell.
+     *
+     * @return the saved notification, or {@code null} if the user has muted this category
+     */
     @Transactional
     public Notification createNotification(UUID userId,
                                            NotificationType type,
@@ -31,9 +43,23 @@ public class NotificationService {
                                            String body,
                                            Map<String, Object> data,
                                            Set<NotificationChannel> channels) {
+        if (!preferencesService.allowsType(userId, type)) {
+            return null;
+        }
+
         Set<NotificationChannel> resolvedChannels = channels == null || channels.isEmpty()
                 ? Set.of(NotificationChannel.IN_APP)
                 : new LinkedHashSet<>(channels);
+
+        // Master push switch: strip PUSH but keep the in-app record.
+        if (resolvedChannels.contains(NotificationChannel.PUSH)
+                && !preferencesService.allowsPush(userId)) {
+            resolvedChannels = new LinkedHashSet<>(resolvedChannels);
+            resolvedChannels.remove(NotificationChannel.PUSH);
+            if (resolvedChannels.isEmpty()) {
+                resolvedChannels.add(NotificationChannel.IN_APP);
+            }
+        }
 
         Notification notification = Notification.builder()
                 .userId(userId)
@@ -45,7 +71,18 @@ public class NotificationService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
+
+        // Live update for anyone with the app open.
         messagingTemplate.convertAndSend("/topic/notifications/" + userId, saved);
+
+        // And a real push for anyone who isn't.
+        if (resolvedChannels.contains(NotificationChannel.PUSH)) {
+            Map<String, Object> pushData = new HashMap<>(saved.getData() != null ? saved.getData() : Map.of());
+            pushData.put("notificationId", saved.getId().toString());
+            pushData.put("type", type.name());
+            pushNotificationService.sendToUser(userId, title, body, pushData);
+        }
+
         return saved;
     }
 

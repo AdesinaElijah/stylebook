@@ -11,6 +11,13 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Sends the customer a receipt once the shop records their payment.
+ *
+ * <p>The notification goes to the customer rather than the owner: the owner is the one who
+ * pressed the button, so telling them what they just did is noise. The customer is the one
+ * who benefits from written confirmation of what they paid and for what.
+ */
 @Component
 @RequiredArgsConstructor
 public class PaymentNotificationListener {
@@ -19,11 +26,13 @@ public class PaymentNotificationListener {
 
     @EventListener
     public void handlePaymentReceived(PaymentReceivedEvent event) {
+        String amount = String.format("GHS %.2f", event.amount());
+
         notificationService.createNotification(
                 event.recipientUserId(),
                 NotificationType.PAYMENT_RECEIVED,
-                "Payment received",
-                "You received a payment for " + event.serviceName(),
+                "Payment confirmed",
+                amount + " for " + event.serviceName() + " at " + event.shopName(),
                 Map.of(
                         "bookingId", event.bookingId().toString(),
                         "shopName", event.shopName(),

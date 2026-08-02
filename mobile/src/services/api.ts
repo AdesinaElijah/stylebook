@@ -55,6 +55,9 @@ export const bookingsAPI = {
   confirm: (id: string) => api.put(`/bookings/${id}/confirm`),
   cancel: (id: string) => api.put(`/bookings/${id}/cancel`),
   reschedule: (id: string, data: any) => api.put(`/bookings/${id}/reschedule`, data),
+  // Owner records payment taken at the shop; omit fields to use listed price + cash
+  recordPayment: (id: string, data?: { method?: string; amount?: number }) =>
+    api.put(`/bookings/${id}/payment`, data ?? {}),
   deleteCancelled: (id: string) => api.delete(`/bookings/${id}`),
   deleteAllCancelled: () => api.delete('/bookings/shop/cancelled'),
 };
@@ -94,6 +97,58 @@ export const notificationsAPI = {
   unreadCount: (userId: string) => api.get('/notifications/unread-count', { params: { userId } }),
   markRead: (id: string) => api.patch(`/notifications/${id}/read`),
   markAllRead: (userId: string) => api.patch('/notifications/mark-all-read', null, { params: { userId } }),
+
+  // Server-side notification settings (shared across all the user's devices)
+  getPreferences: () => api.get('/notifications/preferences'),
+  updatePreferences: (data: Partial<NotificationPreferences>) =>
+    api.put('/notifications/preferences', data),
+
+  // Push token registration
+  registerDevice: (data: { token: string; platform: string }) =>
+    api.post('/notifications/devices', data),
+  unregisterDevice: (token: string) =>
+    api.delete('/notifications/devices', { params: { token } }),
 };
+
+export const messagesAPI = {
+  getConversations: () => api.get('/messages/conversations'),
+  // Opens the thread with a shop, or reopens the existing one
+  openConversation: (shopId: string) => api.post('/messages/conversations', { shopId }),
+  getMessages: (conversationId: string) => api.get(`/messages/conversations/${conversationId}`),
+  send: (conversationId: string, body: string) =>
+    api.post(`/messages/conversations/${conversationId}`, { body }),
+  markRead: (conversationId: string) =>
+    api.patch(`/messages/conversations/${conversationId}/read`),
+  unreadCount: () => api.get('/messages/unread-count'),
+};
+
+export interface Conversation {
+  id: string;
+  shopId: string;
+  otherPartyName: string;
+  otherPartyImageUrl: string | null;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  unreadCount: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  body: string;
+  mine: boolean;
+  createdAt: string;
+}
+
+export interface NotificationPreferences {
+  pushEnabled: boolean;
+  bookingEnabled: boolean;
+  messageEnabled: boolean;
+  reviewEnabled: boolean;
+  socialEnabled: boolean;
+  paymentEnabled: boolean;
+}
 
 export default api;
