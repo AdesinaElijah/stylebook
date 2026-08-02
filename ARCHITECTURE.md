@@ -244,7 +244,9 @@ Appointment happens
 Owner taps Mark Paid → PUT /api/bookings/{id}/payment
     │  records method (CASH | MOBILE_MONEY | CARD) and amount, defaulting to
     │  the listed service price
-    └─ publish PaymentReceivedEvent → customer gets a receipt notification
+    ├─ publish PaymentReceivedEvent → customer gets an in-app notification + push
+    └─ send an emailed receipt via SendGrid (async, best-effort — a failed send
+       must never undo a payment that was genuinely collected)
     ▼
 Customer leaves a review (only allowed on CONFIRMED or COMPLETED bookings, once each)
     └─ publish ReviewCreatedEvent → owner notified; shop rating recalculated
@@ -501,13 +503,6 @@ Required environment variables:
 
 Observations from reading the code, separated from how it works.
 
-**The notification bell never populates.** `NotificationBell.tsx` reads
-`AsyncStorage.getItem('userId')`, but nothing in the app ever writes that key — `AuthContext`
-stores `token` and `user` (a JSON blob containing `userId`). So `userId` stays null, the load
-is skipped and `handleOpen` returns early. Notifications *are* being created and stored
-correctly on the backend; the bell just can't read them. Fix: pull `user.userId` from
-`useAuth()` instead of AsyncStorage.
-
 **Uploaded images don't survive a redeploy.** Files are written to the container filesystem,
 which Railway replaces on every deploy. The seeded demo images survive because they're baked
 into the Docker image; anything a real user uploads is lost. `WebConfig` now checks two
@@ -535,7 +530,20 @@ simultaneous requests could both pass. Low-probability at current scale; a uniqu
 doesn't exist. The booking slot generator and the opening-hours parser are the two pieces where
 unit tests would pay for themselves fastest — both are pure functions with fiddly edge cases.
 
+**Subscription upgrades are simulated.** `PlanCheckoutModal` walks through a mobile-money or
+card checkout and then calls `PUT /api/shops/my-shop/plan`. No money moves and nothing is
+transmitted — the sheet is labelled as a demo on every screen. Real payments would mean a
+Paystack or Hubtel integration and a webhook to confirm settlement before the plan changes.
+
+**`@ExceptionHandler` suppresses Spring's own logging.** Once a handler in
+`GlobalExceptionHandler` claims an exception, Spring logs nothing itself. The handlers
+therefore log explicitly — WARN with the message for deliberate business errors, ERROR with a
+full stack trace for anything unplanned. Without those calls every 500 the backend returned
+was invisible in the Railway logs, which is worth remembering before adding a fourth handler.
+
 **Leftover files.** `mobile/src/screens/WelcomeScreen.tsx` is never imported (superseded by
 `OnboardingScreen`). `react-icons` and `react-native-maps` are declared dependencies with no
-usages. `firebase-service-account.json` holds only placeholder values and is read by nothing —
-push goes through Expo.
+usages, and `@expo/vector-icons` is used everywhere but never declared — it resolves at
+runtime as a transitive dependency of `expo`, though TypeScript can't find its types.
+`firebase-service-account.json` holds only placeholder values and is read by nothing — push
+goes through Expo.
