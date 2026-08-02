@@ -6,6 +6,7 @@ import { shopsAPI, notificationsAPI, NotificationPreferences } from '../../servi
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import PlanCheckoutModal from '../../components/PlanCheckoutModal';
 
 const APP_VERSION = '1.0.0';
 
@@ -28,6 +29,9 @@ export default function OwnerSettingsScreen() {
   const { user, logout } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
   const [shop, setShop] = useState<any>(null);
+
+  // The plan being paid for, or null when the checkout sheet is closed.
+  const [checkoutPlan, setCheckoutPlan] = useState<string | null>(null);
 
   // Server-side settings — these follow the account across devices.
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
@@ -57,27 +61,44 @@ export default function OwnerSettingsScreen() {
     }
   };
 
+  /** Applies the plan change on the server. Shared by both the paid and free paths. */
+  const applyPlan = async (pl: string) => {
+    try {
+      const response = await shopsAPI.updatePlan({ plan: pl });
+      setShop(response.data);
+      return true;
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to change plan');
+      return false;
+    }
+  };
+
+  /**
+   * Upgrades go through the checkout sheet; downgrading to Free doesn't, since there's
+   * nothing to pay and asking for card details to spend less would be absurd.
+   */
   const changePlan = (pl: string) => {
-    Alert.alert(
-      pl === 'FREE' ? 'Switch to Free?' : 'Upgrade to ' + pl + '?',
-      PLAN_INFO[pl]?.price + ' — ' + PLAN_INFO[pl]?.desc +
-      '\n\n(Demo mode: no payment will be charged.)',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: async () => {
-            try {
-              const response = await shopsAPI.updatePlan({ plan: pl });
-              setShop(response.data);
-              Alert.alert('Done!', 'Your shop is now on the ' + pl + ' plan.');
-            } catch (error: any) {
-              Alert.alert('Error', error.response?.data?.error || 'Failed to change plan');
-            }
+    if (pl === 'FREE') {
+      Alert.alert(
+        'Switch to Free?',
+        PLAN_INFO[pl]?.desc + '\n\nYou will lose access to your current plan\'s features.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Switch',
+            style: 'destructive',
+            onPress: async () => {
+              if (await applyPlan(pl)) {
+                Alert.alert('Done', 'Your shop is now on the Free plan.');
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+      return;
+    }
+
+    setCheckoutPlan(pl);
   };
 
   const handleLogout = () => {
@@ -219,6 +240,18 @@ export default function OwnerSettingsScreen() {
         </TouchableOpacity>
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      <PlanCheckoutModal
+        visible={checkoutPlan !== null}
+        planName={checkoutPlan}
+        price={checkoutPlan ? PLAN_INFO[checkoutPlan]?.price : ''}
+        onCancel={() => setCheckoutPlan(null)}
+        onPaid={async () => {
+          const target = checkoutPlan;
+          setCheckoutPlan(null);
+          if (target) await applyPlan(target);
+        }}
+      />
     </ThemedScreen>
   );
 }

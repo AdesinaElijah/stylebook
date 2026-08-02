@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+
+/** How often the badge re-checks for new notifications while the screen is mounted. */
+const POLL_INTERVAL_MS = 30000;
 
 interface NotificationItem {
   id: string;
@@ -28,7 +31,12 @@ const typeIcons: Record<string, string> = {
 };
 
 const NotificationBell = ({ navigation }: { navigation?: any }) => {
-  const [userId, setUserId] = useState<string | null>(null);
+  // Taken from auth state rather than AsyncStorage. This used to read a 'userId' key that
+  // nothing ever writes — AuthContext stores 'token' and 'user' — so it was always null and
+  // the bell silently never loaded anything.
+  const { user } = useAuth();
+  const userId = user?.userId ?? null;
+
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -50,16 +58,19 @@ const NotificationBell = ({ navigation }: { navigation?: any }) => {
     }
   };
 
+  // Load on sign-in, then poll so the badge reflects notifications that arrive while the
+  // user is sitting on this screen.
   useEffect(() => {
-    const loadUser = async () => {
-      const storedUserId = await AsyncStorage.getItem('userId');
-      if (storedUserId) {
-        setUserId(storedUserId);
-        loadNotifications(storedUserId);
-      }
-    };
-    loadUser();
-  }, []);
+    if (!userId) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
+    loadNotifications(userId);
+    const timer = setInterval(() => loadNotifications(userId), POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [userId]);
 
   const handleOpen = async () => {
     if (!userId) return;
