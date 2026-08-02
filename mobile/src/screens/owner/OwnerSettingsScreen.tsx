@@ -10,6 +10,27 @@ import PlanCheckoutModal from '../../components/PlanCheckoutModal';
 
 const APP_VERSION = '1.0.0';
 
+/**
+ * Declared at module scope, not inside the screen — a component defined inside another is
+ * a new type on every render, so React remounts it instead of updating it.
+ */
+function Row({ label, sub, value, onChange, theme }: any) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowText}>
+        <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+        {sub && <Text style={[styles.rowSub, { color: theme.textSecondary }]}>{sub}</Text>}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: theme.surfaceSecondary, true: theme.accent }}
+        thumbColor="#fff"
+      />
+    </View>
+  );
+}
+
 const DEFAULT_PREFS: NotificationPreferences = {
   pushEnabled: true,
   bookingEnabled: true,
@@ -108,21 +129,6 @@ export default function OwnerSettingsScreen() {
     ]);
   };
 
-  const Row = ({ label, sub, value, onChange }: any) => (
-    <View style={styles.row}>
-      <View style={styles.rowText}>
-        <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
-        {sub && <Text style={[styles.rowSub, { color: theme.textSecondary }]}>{sub}</Text>}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: theme.surfaceSecondary, true: theme.accent }}
-        thumbColor="#fff"
-      />
-    </View>
-  );
-
   const plan = shop?.plan || 'FREE';
 
   return (
@@ -148,6 +154,7 @@ export default function OwnerSettingsScreen() {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>APPEARANCE</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            theme={theme}
             label={isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
             sub={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
             value={isDark}
@@ -158,30 +165,35 @@ export default function OwnerSettingsScreen() {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>NOTIFICATIONS</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            theme={theme}
             label="Push Notifications"
             sub="Turn this off to silence all push on every device"
             value={prefs.pushEnabled}
             onChange={(v: boolean) => updatePref('pushEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Booking Alerts"
             sub="New booking requests and cancellations"
             value={prefs.bookingEnabled}
             onChange={(v: boolean) => updatePref('bookingEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Review Alerts"
             sub="When a customer leaves a review"
             value={prefs.reviewEnabled}
             onChange={(v: boolean) => updatePref('reviewEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Messages"
             sub="New messages from customers"
             value={prefs.messageEnabled}
             onChange={(v: boolean) => updatePref('messageEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Post Activity"
             sub="Likes and comments on your posts"
             value={prefs.socialEnabled}

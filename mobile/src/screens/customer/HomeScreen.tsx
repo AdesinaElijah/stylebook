@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl,
   ScrollView, Modal, Image, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+// From safe-area-context, not react-native: the built-in SafeAreaView does nothing on
+// Android, which let the status bar sit on top of the notification bell.
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { shopsAPI, promosAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
@@ -117,7 +120,7 @@ export default function HomeScreen({ navigation }: any) {
   };
   const featuredShops = shops.filter(s => s.plan === 'PRO' || s.plan === 'ENTERPRISE');
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>

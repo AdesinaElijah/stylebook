@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { notificationsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,6 +37,11 @@ const NotificationBell = ({ navigation }: { navigation?: any }) => {
   // the bell silently never loaded anything.
   const { user } = useAuth();
   const userId = user?.userId ?? null;
+
+  // The dropdown lives inside a Modal, so it positions against the raw screen rather than
+  // against the bell. Offsetting by the top inset keeps it under the bell on a device with
+  // a status bar, notch or Dynamic Island instead of drifting up behind them.
+  const insets = useSafeAreaInsets();
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -132,7 +138,7 @@ const NotificationBell = ({ navigation }: { navigation?: any }) => {
 
       <Modal transparent visible={visible} animationType="fade" onRequestClose={() => setVisible(false)}>
         <Pressable style={styles.overlay} onPress={() => setVisible(false)} />
-        <View style={styles.dropdown}>
+        <View style={[styles.dropdown, { top: insets.top + 48 }]}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Notifications</Text>
             <TouchableOpacity onPress={handleMarkAllRead}><Text style={styles.markAll}>Mark all read</Text></TouchableOpacity>
@@ -184,7 +190,7 @@ const styles = StyleSheet.create({
   badge: { position: 'absolute', top: 2, right: 2, backgroundColor: '#ef4444', borderRadius: 999, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   overlay: { flex: 1, backgroundColor: 'transparent' },
-  dropdown: { position: 'absolute', top: 48, right: 0, width: 320, maxHeight: 420, backgroundColor: '#fff', borderRadius: 12, padding: 12, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 8, elevation: 8 },
+  dropdown: { position: 'absolute', right: 12, width: 320, maxHeight: 420, backgroundColor: '#fff', borderRadius: 12, padding: 12, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 8, elevation: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   title: { fontSize: 16, fontWeight: '700', color: '#111827' },
   markAll: { color: '#2563eb', fontWeight: '600' },

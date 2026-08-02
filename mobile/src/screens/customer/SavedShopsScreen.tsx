@@ -68,6 +68,9 @@ export default function SavedShopsScreen({ navigation }: any) {
   return (
     <ThemedScreen>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
+          <Text style={[styles.backText, { color: theme.accent }]}>← Back</Text>
+        </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>Saved Shops</Text>
       </View>
 
@@ -103,6 +106,7 @@ export default function SavedShopsScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   header: { padding: 20, paddingTop: 16 },
+  backText: { fontSize: 16, marginBottom: 12 },
   title: { fontSize: 28, fontWeight: '900' },
   list: { padding: 20 },
   shopCard: {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Modal, ScrollView, ActivityIndicator, Pressable,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
@@ -19,6 +20,30 @@ import { useTheme } from '../context/ThemeContext';
  */
 
 const MOMO_NETWORKS = ['MTN', 'Telecel', 'AirtelTigo'];
+
+/**
+ * Defined at module scope on purpose.
+ *
+ * <p>This started life inside PlanCheckoutModal, which meant React saw a brand-new
+ * component type on every render. Typing a digit changed state, which re-rendered the
+ * sheet, which produced a different Field type — so React unmounted the TextInput and
+ * mounted a fresh one, losing focus and dropping keystrokes. Hoisting it out keeps the
+ * same component identity across renders, so the input holds focus while you type.
+ */
+function Field({ label, theme, ...input }: any) {
+  return (
+    <View style={styles.field}>
+      <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
+      <TextInput
+        style={[styles.input, {
+          backgroundColor: theme.input, color: theme.text, borderColor: theme.border,
+        }]}
+        placeholderTextColor={theme.textTertiary}
+        {...input}
+      />
+    </View>
+  );
+}
 
 type Props = {
   visible: boolean;
@@ -118,19 +143,6 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
     onPaid();
   };
 
-  const Field = ({ label, ...input }: any) => (
-    <View style={styles.field}>
-      <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
-      <TextInput
-        style={[styles.input, {
-          backgroundColor: theme.input, color: theme.text, borderColor: theme.border,
-        }]}
-        placeholderTextColor={theme.textTertiary}
-        {...input}
-      />
-    </View>
-  );
-
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable
@@ -138,6 +150,13 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
         onPress={() => stage === 'details' && onCancel()}
       />
 
+      {/* Lifts the sheet above the keyboard — the numeric keypad was covering the
+          number field and the Pay button entirely. */}
+      <KeyboardAvoidingView
+        style={styles.sheetWrap}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        pointerEvents="box-none"
+      >
       <View style={[styles.sheet, { backgroundColor: theme.surface }]}>
         <View style={[styles.demoBanner, { backgroundColor: theme.accentLight, borderColor: theme.accent }]}>
           <Text style={[styles.demoText, { color: theme.accent }]}>
@@ -196,6 +215,7 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
                 </View>
 
                 <Field
+                  theme={theme}
                   label="Mobile money number"
                   placeholder="0244 123 456"
                   keyboardType="phone-pad"
@@ -207,6 +227,7 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
             ) : (
               <>
                 <Field
+                  theme={theme}
                   label="Card number"
                   placeholder="4242 4242 4242 4242"
                   keyboardType="number-pad"
@@ -217,6 +238,7 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
                 <View style={styles.splitRow}>
                   <View style={styles.splitItem}>
                     <Field
+                      theme={theme}
                       label="Expiry"
                       placeholder="MM/YY"
                       value={expiry}
@@ -226,6 +248,7 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
                   </View>
                   <View style={styles.splitItem}>
                     <Field
+                      theme={theme}
                       label="CVV"
                       placeholder="123"
                       keyboardType="number-pad"
@@ -280,16 +303,17 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
           </View>
         )}
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  sheetWrap: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, maxHeight: '88%',
+    padding: 24, paddingBottom: 32, maxHeight: '88%',
   },
   demoBanner: {
     borderRadius: 10, borderWidth: 1, paddingVertical: 8,

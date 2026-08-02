@@ -11,6 +11,30 @@ import { notificationsAPI, NotificationPreferences } from '../../services/api';
 const APP_VERSION = '1.0.0';
 const SETTINGS_KEY = 'stylebook_customer_settings';
 
+/**
+ * Declared at module scope, not inside the screen.
+ *
+ * <p>A component defined inside another is a brand-new type on every render, so React
+ * unmounts and remounts it rather than updating it — which resets the Switch mid-animation
+ * every time any toggle changes.
+ */
+function Row({ label, sub, value, onChange, theme }: any) {
+  return (
+    <View style={[styles.row, { borderBottomColor: theme.border }]}>
+      <View style={styles.rowText}>
+        <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
+        {sub && <Text style={[styles.rowSub, { color: theme.textSecondary }]}>{sub}</Text>}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: theme.surfaceSecondary, true: theme.accent }}
+        thumbColor="#fff"
+      />
+    </View>
+  );
+}
+
 const DEFAULT_PREFS: NotificationPreferences = {
   pushEnabled: true,
   bookingEnabled: true,
@@ -66,21 +90,6 @@ export default function SettingsScreen({ navigation }: any) {
     }
   };
 
-  const Row = ({ label, sub, value, onChange }: any) => (
-    <View style={[styles.row, { borderBottomColor: theme.border }]}>
-      <View style={styles.rowText}>
-        <Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text>
-        {sub && <Text style={[styles.rowSub, { color: theme.textSecondary }]}>{sub}</Text>}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: theme.surfaceSecondary, true: theme.accent }}
-        thumbColor="#fff"
-      />
-    </View>
-  );
-
   return (
     <ThemedScreen>
       <View style={styles.header}>
@@ -93,6 +102,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>APPEARANCE</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            theme={theme}
             label={isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
             sub="Light mode is the default"
             value={isDark}
@@ -103,30 +113,35 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>NOTIFICATIONS</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            theme={theme}
             label="Push Notifications"
             sub="Turn this off to silence all push on every device"
             value={prefs.pushEnabled}
             onChange={(v: boolean) => updatePref('pushEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Booking Updates"
             sub="When a shop confirms or cancels your appointment"
             value={prefs.bookingEnabled}
             onChange={(v: boolean) => updatePref('bookingEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Messages"
             sub="New messages from shops you've booked"
             value={prefs.messageEnabled}
             onChange={(v: boolean) => updatePref('messageEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Likes & Comments"
             sub="Activity on posts you interact with"
             value={prefs.socialEnabled}
             onChange={(v: boolean) => updatePref('socialEnabled', v)}
           />
           <Row
+            theme={theme}
             label="Appointment Reminders"
             sub="Alert 10 minutes before your appointment (this device)"
             value={settings.bookingReminders}
@@ -137,6 +152,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>EMAIL</Text>
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
+            theme={theme}
             label="Email Updates"
             sub="News, offers and tips from StyleBook"
             value={settings.emailUpdates}
