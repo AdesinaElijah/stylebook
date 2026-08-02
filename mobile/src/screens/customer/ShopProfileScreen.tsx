@@ -293,11 +293,17 @@ export default function ShopProfileScreen({ route, navigation }: any) {
 
           {activeTab === 'Photos' && (
             <View style={styles.photosGrid}>
-              {shop?.photoUrls?.length === 0 ? (
+              {!shop?.photoUrls?.length ? (
                 <Text style={[styles.emptyText, { color: theme.textTertiary }]}>No photos yet</Text>
               ) : (
-                shop?.photoUrls?.map((url: string, i: number) => (
-                  <Image key={i} source={{ uri: url }} style={styles.photoImage} />
+                shop.photoUrls.map((url: string, i: number) => (
+                  // The tint matters: without a background an image that fails to load is
+                  // invisible, so a broken URL looks identical to an empty gallery.
+                  <Image
+                    key={i}
+                    source={{ uri: url }}
+                    style={[styles.photoImage, { backgroundColor: theme.surfaceSecondary }]}
+                  />
                 ))
               )}
             </View>
