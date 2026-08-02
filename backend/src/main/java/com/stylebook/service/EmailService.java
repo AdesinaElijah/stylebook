@@ -2,21 +2,34 @@ package com.stylebook.service;
 
 import com.stylebook.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    /**
+     * Timeouts matter here: these calls happen on the async pool, and a stalled connection to
+     * SendGrid would otherwise hold a worker thread open indefinitely.
+     */
+    private final RestTemplate restTemplate = new RestTemplateBuilder()
+            .setConnectTimeout(Duration.ofSeconds(5))
+            .setReadTimeout(Duration.ofSeconds(15))
+            .build();
 
     @Value("${stylebook.app.base-url}")
     private String baseUrl;
@@ -32,6 +45,15 @@ public class EmailService {
 
     private static final String SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
 
+    /**
+     * Posts one plain-text message to SendGrid.
+     *
+     * <p>Failures are logged and swallowed rather than rethrown. Every caller runs on the async
+     * pool, so an exception here would vanish into a background thread anyway — logging it is
+     * the only way anyone finds out. A 202 from SendGrid means accepted for delivery, not
+     * delivered: a suppressed or bounced recipient still returns 202 and is silently dropped,
+     * so a clean log line here does not by itself prove the mail arrived.
+     */
     private void sendViaSendGrid(String to, String subject, String textBody) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -45,7 +67,14 @@ public class EmailService {
         );
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
-        restTemplate.postForEntity(SENDGRID_API_URL, request, String.class);
+
+        try {
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(SENDGRID_API_URL, request, String.class);
+            log.info("SendGrid accepted '{}' for {} ({})", subject, to, response.getStatusCode());
+        } catch (RestClientException ex) {
+            log.error("SendGrid rejected '{}' for {}: {}", subject, to, ex.getMessage());
+        }
     }
 
     @org.springframework.scheduling.annotation.Async
@@ -79,6 +108,13 @@ public class EmailService {
         sendViaSendGrid(user.getEmail(), subject, body);
     }
 
+    /**
+     * Async to match {@link #sendOtpEmail}. Previously this ran inline inside
+     * {@code AuthService.forgotPassword}, which is transactional — so any SendGrid error
+     * rolled back the reset code that had just been saved, leaving the user with a code in
+     * their inbox that the database had never heard of.
+     */
+    @org.springframework.scheduling.annotation.Async
     public void sendPasswordResetEmail(User user, String code) {
         String subject = appName + " - Reset your password";
         String body =

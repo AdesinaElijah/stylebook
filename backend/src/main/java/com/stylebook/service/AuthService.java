@@ -7,6 +7,8 @@ import com.stylebook.repository.ShopRepository;
 import com.stylebook.repository.UserRepository;
 import com.stylebook.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +26,23 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final EmailService emailService;
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private static final SecureRandom OTP_RANDOM = new SecureRandom();
     private static final int OTP_VALID_MINUTES = 10;
     private static final int RESEND_COOLDOWN_SECONDS = 30;
+
+    /**
+     * Trims and lowercases an email before it is stored.
+     *
+     * <p>Addresses are case-insensitive in practice, so keeping them in a single canonical
+     * form stops "Ama@gmail.com" and "ama@gmail.com" becoming two accounts. Lookups still use
+     * the ignore-case query, because rows created before this existed keep their original
+     * casing.
+     */
+    private String normaliseEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
 
     // --- OTP helpers -------------------------------------------------
 
@@ -47,14 +63,15 @@ public class AuthService {
 
     @Transactional
     public AuthResponse registerCustomer(CustomerRegisterRequest request) {
-        User existing = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if (existing != null) {
+        String email = normaliseEmail(request.getEmail());
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new RuntimeException("Email already in use");
         }
 
         User user = User.builder()
                 .fullName(request.getFullName())
-                .email(request.getEmail())
+                .email(email)
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.UserRole.CUSTOMER)
@@ -71,14 +88,15 @@ public class AuthService {
 
     @Transactional
     public AuthResponse registerOwner(OwnerRegisterRequest request) {
-        User existingOwner = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if (existingOwner != null) {
+        String email = normaliseEmail(request.getEmail());
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new RuntimeException("Email already in use");
         }
 
         User user = User.builder()
                 .fullName(request.getFullName())
-                .email(request.getEmail())
+                .email(email)
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.UserRole.OWNER)
@@ -112,7 +130,7 @@ public class AuthService {
     // --- Login -----------------------------------------------------------
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(normaliseEmail(request.getEmail()))
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -137,7 +155,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(normaliseEmail(request.getEmail()))
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         if (user.isEmailVerified()) {
@@ -180,7 +198,7 @@ public class AuthService {
 
     @Transactional
     public MessageResponse resendOtp(ResendOtpRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(normaliseEmail(request.getEmail()))
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         if (user.isEmailVerified()) {
@@ -205,9 +223,14 @@ public class AuthService {
 
     @Transactional
     public MessageResponse forgotPassword(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        String email = normaliseEmail(request.getEmail());
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
 
         if (user == null) {
+            // The response stays deliberately vague so this endpoint can't be used to discover
+            // which addresses are registered. Log it, though — otherwise a typo and a genuine
+            // delivery failure look identical from the outside, and neither leaves a trace.
+            log.warn("Password reset requested for an address with no account: {}", email);
             return new MessageResponse("If that email is registered, you will receive password reset instructions.");
         }
 
@@ -216,6 +239,7 @@ public class AuthService {
         user.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(OTP_VALID_MINUTES));
         userRepository.save(user);
 
+        log.info("Password reset code issued for {}", user.getEmail());
         emailService.sendPasswordResetEmail(user, code);
 
         return new MessageResponse("If that email is registered, you will receive password reset instructions.");
@@ -223,7 +247,7 @@ public class AuthService {
 
     @Transactional
     public MessageResponse resetPassword(ResetPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(normaliseEmail(request.getEmail()))
                 .orElseThrow(() -> new RuntimeException("Invalid or expired code"));
 
         String storedCode = user.getPasswordResetToken();
