@@ -129,6 +129,37 @@ public class EmailService {
         sendViaSendGrid(user.getEmail(), subject, body);
     }
 
+    /**
+     * Emails the customer a receipt after the shop records their payment.
+     *
+     * <p>StyleBook never touches the money — it changes hands at the shop in cash, over
+     * mobile money or on a card terminal. This is the customer's written record of what they
+     * paid and for what, which is the thing people actually go looking for weeks later.
+     *
+     * <p>Async and best-effort: a receipt failing to send must never undo a payment that was
+     * genuinely collected.
+     */
+    @org.springframework.scheduling.annotation.Async
+    public void sendPaymentReceiptEmail(String toEmail, String customerName, String shopName,
+                                        String serviceName, String amount, String method,
+                                        String date) {
+        String subject = appName + " - Payment receipt from " + shopName;
+        String body =
+            "Hi " + customerName + ",\n\n" +
+            shopName + " has recorded your payment. Here are the details:\n\n" +
+            "Amount:   GHS " + amount + "\n" +
+            "Service:  " + serviceName + "\n" +
+            "Shop:     " + shopName + "\n" +
+            "Method:   " + method + "\n" +
+            "Date:     " + date + "\n\n" +
+            "Keep this email as your receipt. If anything here looks wrong, contact the shop " +
+            "directly through the app.\n\n" +
+            "Thanks for using " + appName + ",\n" +
+            "The " + appName + " Team";
+
+        sendViaSendGrid(toEmail, subject, body);
+    }
+
     public void sendBookingConfirmationEmail(String toEmail, String customerName,
                                               String shopName, String serviceName,
                                               String date, String time) {
