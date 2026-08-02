@@ -246,6 +246,9 @@ export default function BookingsScreen({ navigation }: any) {
         <Text style={[styles.detailText, { color: theme.textSecondary }]}>📅 {item.bookingDate}</Text>
         <Text style={[styles.detailText, { color: theme.textSecondary }]}>🕐 {item.bookingTime}</Text>
         <Text style={[styles.detailText, { color: theme.textSecondary }]}>💰 GHS {item.servicePrice}</Text>
+        {item.paymentStatus === 'PAID' && (
+          <Text style={styles.paidLine}>✅ Paid GHS {item.amountPaid} — receipt on file</Text>
+        )}
       </View>
       {(item.status === 'PENDING' || item.status === 'CONFIRMED') && (
         <View style={styles.actionRow}>
@@ -443,6 +446,7 @@ const styles = StyleSheet.create({
   serviceName: { fontSize: 14, marginBottom: 12 },
   bookingDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 },
   detailText: { fontSize: 13 },
+  paidLine: { fontSize: 13, color: '#4CAF50', fontWeight: '600', marginTop: 2 },
   actionRow: { flexDirection: 'row', gap: 8 },
   rescheduleBtn: {
     flex: 1, borderRadius: 8, padding: 10,

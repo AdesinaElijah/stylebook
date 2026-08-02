@@ -6,29 +6,64 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
+import { notificationsAPI, NotificationPreferences } from '../../services/api';
 
 const APP_VERSION = '1.0.0';
 const SETTINGS_KEY = 'stylebook_customer_settings';
 
+const DEFAULT_PREFS: NotificationPreferences = {
+  pushEnabled: true,
+  bookingEnabled: true,
+  messageEnabled: true,
+  reviewEnabled: true,
+  socialEnabled: true,
+  paymentEnabled: true,
+};
+
 export default function SettingsScreen({ navigation }: any) {
   const { logout } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
+
+  // Device-local settings — these drive behaviour on this phone only.
   const [settings, setSettings] = useState({
-    pushNotifications: true,
     bookingReminders: true,
     emailUpdates: false,
   });
 
+  // Server-side settings — these follow the account across devices.
+  const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
+
   useEffect(() => {
     AsyncStorage.getItem(SETTINGS_KEY).then((saved) => {
-      if (saved) setSettings(JSON.parse(saved));
+      if (saved) setSettings((current) => ({ ...current, ...JSON.parse(saved) }));
     });
+
+    notificationsAPI
+      .getPreferences()
+      .then((res) => setPrefs({ ...DEFAULT_PREFS, ...res.data }))
+      .catch(() => {}); // offline: fall back to defaults, nothing is lost
   }, []);
 
   const updateSetting = (key: string, value: boolean) => {
     const next = { ...settings, [key]: value };
     setSettings(next);
     AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  };
+
+  /**
+   * Flips a server-side toggle. The switch moves immediately and rolls back if the
+   * request fails, so the UI never shows a setting that didn't actually save.
+   */
+  const updatePref = async (key: keyof NotificationPreferences, value: boolean) => {
+    const previous = prefs;
+    const patch: Partial<NotificationPreferences> = { [key]: value };
+
+    setPrefs({ ...prefs, ...patch });
+    try {
+      await notificationsAPI.updatePreferences(patch);
+    } catch {
+      setPrefs(previous);
+    }
   };
 
   const Row = ({ label, sub, value, onChange }: any) => (
@@ -69,13 +104,31 @@ export default function SettingsScreen({ navigation }: any) {
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
             label="Push Notifications"
-            sub="Booking confirmations and updates"
-            value={settings.pushNotifications}
-            onChange={(v: boolean) => updateSetting('pushNotifications', v)}
+            sub="Turn this off to silence all push on every device"
+            value={prefs.pushEnabled}
+            onChange={(v: boolean) => updatePref('pushEnabled', v)}
+          />
+          <Row
+            label="Booking Updates"
+            sub="When a shop confirms or cancels your appointment"
+            value={prefs.bookingEnabled}
+            onChange={(v: boolean) => updatePref('bookingEnabled', v)}
+          />
+          <Row
+            label="Messages"
+            sub="New messages from shops you've booked"
+            value={prefs.messageEnabled}
+            onChange={(v: boolean) => updatePref('messageEnabled', v)}
+          />
+          <Row
+            label="Likes & Comments"
+            sub="Activity on posts you interact with"
+            value={prefs.socialEnabled}
+            onChange={(v: boolean) => updatePref('socialEnabled', v)}
           />
           <Row
             label="Appointment Reminders"
-            sub="Alert 10 minutes before your appointment"
+            sub="Alert 10 minutes before your appointment (this device)"
             value={settings.bookingReminders}
             onChange={(v: boolean) => updateSetting('bookingReminders', v)}
           />

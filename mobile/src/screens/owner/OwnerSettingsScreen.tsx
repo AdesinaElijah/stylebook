@@ -2,14 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { shopsAPI } from '../../services/api';
+import { shopsAPI, notificationsAPI, NotificationPreferences } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
 
 const APP_VERSION = '1.0.0';
-const SETTINGS_KEY = 'stylebook_owner_settings';
+
+const DEFAULT_PREFS: NotificationPreferences = {
+  pushEnabled: true,
+  bookingEnabled: true,
+  messageEnabled: true,
+  reviewEnabled: true,
+  socialEnabled: true,
+  paymentEnabled: true,
+};
 
 const PLAN_INFO: any = {
   FREE: { price: 'GHS 0/mo', desc: '10 bookings, 3 photos, 5 posts' },
@@ -21,23 +28,33 @@ export default function OwnerSettingsScreen() {
   const { user, logout } = useAuth();
   const { theme, isDark, toggleTheme } = useTheme();
   const [shop, setShop] = useState<any>(null);
-  const [settings, setSettings] = useState({
-    pushNotifications: true,
-    bookingAlerts: true,
-    reviewAlerts: true,
-  });
+
+  // Server-side settings — these follow the account across devices.
+  const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
 
   useEffect(() => {
-    AsyncStorage.getItem(SETTINGS_KEY).then((saved) => {
-      if (saved) setSettings(JSON.parse(saved));
-    });
     shopsAPI.getMyShop().then((res) => setShop(res.data)).catch(() => {});
+
+    notificationsAPI
+      .getPreferences()
+      .then((res) => setPrefs({ ...DEFAULT_PREFS, ...res.data }))
+      .catch(() => {}); // offline: fall back to defaults, nothing is lost
   }, []);
 
-  const updateSetting = (key: string, value: boolean) => {
-    const next = { ...settings, [key]: value };
-    setSettings(next);
-    AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  /**
+   * Flips a server-side toggle. The switch moves immediately and rolls back if the
+   * request fails, so the UI never shows a setting that didn't actually save.
+   */
+  const updatePref = async (key: keyof NotificationPreferences, value: boolean) => {
+    const previous = prefs;
+    const patch: Partial<NotificationPreferences> = { [key]: value };
+
+    setPrefs({ ...prefs, ...patch });
+    try {
+      await notificationsAPI.updatePreferences(patch);
+    } catch {
+      setPrefs(previous);
+    }
   };
 
   const changePlan = (pl: string) => {
@@ -121,21 +138,33 @@ export default function OwnerSettingsScreen() {
         <View style={[styles.card, { backgroundColor: theme.surface }]}>
           <Row
             label="Push Notifications"
-            sub="General app notifications"
-            value={settings.pushNotifications}
-            onChange={(v: boolean) => updateSetting('pushNotifications', v)}
+            sub="Turn this off to silence all push on every device"
+            value={prefs.pushEnabled}
+            onChange={(v: boolean) => updatePref('pushEnabled', v)}
           />
           <Row
             label="Booking Alerts"
-            sub="Get notified of new bookings"
-            value={settings.bookingAlerts}
-            onChange={(v: boolean) => updateSetting('bookingAlerts', v)}
+            sub="New booking requests and cancellations"
+            value={prefs.bookingEnabled}
+            onChange={(v: boolean) => updatePref('bookingEnabled', v)}
           />
           <Row
             label="Review Alerts"
             sub="When a customer leaves a review"
-            value={settings.reviewAlerts}
-            onChange={(v: boolean) => updateSetting('reviewAlerts', v)}
+            value={prefs.reviewEnabled}
+            onChange={(v: boolean) => updatePref('reviewEnabled', v)}
+          />
+          <Row
+            label="Messages"
+            sub="New messages from customers"
+            value={prefs.messageEnabled}
+            onChange={(v: boolean) => updatePref('messageEnabled', v)}
+          />
+          <Row
+            label="Post Activity"
+            sub="Likes and comments on your posts"
+            value={prefs.socialEnabled}
+            onChange={(v: boolean) => updatePref('socialEnabled', v)}
           />
         </View>
 

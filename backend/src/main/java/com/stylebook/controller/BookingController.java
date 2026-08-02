@@ -78,6 +78,19 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.cancelBooking(userId, bookingId));
     }
 
+    /**
+     * Owner records payment taken at the shop. Body is optional — an empty body means
+     * "the listed price, in cash".
+     */
+    @PutMapping("/{bookingId}/payment")
+    public ResponseEntity<BookingDTO.BookingResponse> recordPayment(
+            @PathVariable UUID bookingId,
+            @RequestBody(required = false) BookingDTO.RecordPaymentRequest request,
+            Authentication authentication) {
+        UUID ownerId = (UUID) authentication.getPrincipal();
+        return ResponseEntity.ok(bookingService.recordPayment(ownerId, bookingId, request));
+    }
+
     @PutMapping("/{bookingId}/reschedule")
     public ResponseEntity<BookingDTO.BookingResponse> rescheduleBooking(
             @PathVariable UUID bookingId,

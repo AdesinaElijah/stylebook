@@ -59,6 +59,36 @@ export default function OwnerBookingsScreen() {
     ]);
   };
 
+  /**
+   * Records payment taken at the shop.
+   *
+   * StyleBook doesn't handle money — the customer pays in cash, by MoMo or on a card
+   * terminal, and this just logs which. The amount defaults to the listed price, so the
+   * common case is two taps. The customer gets a receipt notification either way.
+   */
+  const markPaid = (booking: any) => {
+    const record = async (method: string) => {
+      try {
+        await bookingsAPI.recordPayment(booking.id, { method });
+        loadBookings();
+        Alert.alert('Payment recorded', `${booking.customerName} has been sent a receipt.`);
+      } catch (error: any) {
+        Alert.alert('Error', error.response?.data?.error || 'Failed to record payment');
+      }
+    };
+
+    Alert.alert(
+      'Record Payment',
+      `GHS ${booking.servicePrice} for ${booking.serviceName}\n\nHow did ${booking.customerName} pay?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cash', onPress: () => record('CASH') },
+        { text: 'Mobile Money', onPress: () => record('MOBILE_MONEY') },
+        { text: 'Card', onPress: () => record('CARD') },
+      ]
+    );
+  };
+
   const deleteBooking = async (id: string) => {
     try {
       await bookingsAPI.deleteCancelled(id);
@@ -84,6 +114,12 @@ export default function OwnerBookingsScreen() {
       },
     ]);
   };
+
+  /** MOBILE_MONEY -> "Mobile Money" */
+  const formatMethod = (method?: string) =>
+    method
+      ? method.split('_').map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
+      : '';
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -125,6 +161,11 @@ export default function OwnerBookingsScreen() {
         <Text style={[styles.detailText, { color: theme.textSecondary }]}>📅 {item.bookingDate}</Text>
         <Text style={[styles.detailText, { color: theme.textSecondary }]}>🕐 {item.bookingTime}</Text>
         <Text style={[styles.detailText, { color: theme.textSecondary }]}>💰 GHS {item.servicePrice}</Text>
+        {item.paymentStatus === 'PAID' && (
+          <Text style={styles.paidLine}>
+            ✅ Paid GHS {item.amountPaid} · {formatMethod(item.paymentMethod)}
+          </Text>
+        )}
       </View>
 
       {item.status === 'PENDING' && (
@@ -142,8 +183,28 @@ export default function OwnerBookingsScreen() {
       )}
 
       {item.status === 'CONFIRMED' && (
-        <TouchableOpacity style={styles.cancelBtnFull} onPress={() => cancelBooking(item.id)}>
-          <Text style={styles.cancelBtnText}>Cancel Booking</Text>
+        <View style={styles.actionRow}>
+          {item.paymentStatus !== 'PAID' && (
+            <TouchableOpacity
+              style={[styles.payBtn, { backgroundColor: theme.accentLight }]}
+              onPress={() => markPaid(item)}
+            >
+              <Text style={styles.payBtnText}>💵 Mark Paid</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => cancelBooking(item.id)}>
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Walk-ins and appointments closed out before payment was logged */}
+      {item.status === 'COMPLETED' && item.paymentStatus !== 'PAID' && (
+        <TouchableOpacity
+          style={[styles.payBtn, { backgroundColor: theme.accentLight }]}
+          onPress={() => markPaid(item)}
+        >
+          <Text style={styles.payBtnText}>💵 Mark Paid</Text>
         </TouchableOpacity>
       )}
 
@@ -234,6 +295,9 @@ const styles = StyleSheet.create({
   cancelBtn: { flex: 1, backgroundColor: '#1a0a0a', borderRadius: 8, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#f44336' },
   cancelBtnFull: { backgroundColor: '#1a0a0a', borderRadius: 8, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#f44336' },
   cancelBtnText: { color: '#f44336', fontWeight: '700' },
+  payBtn: { flex: 1, borderRadius: 8, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#4CAF50' },
+  payBtnText: { color: '#4CAF50', fontWeight: '700' },
+  paidLine: { fontSize: 13, color: '#4CAF50', fontWeight: '600', marginTop: 2 },
   deleteBtn: { borderRadius: 8, padding: 12, alignItems: 'center', borderWidth: 1 },
   deleteBtnText: { fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 60 },

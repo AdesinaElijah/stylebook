@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { registerForPush, unregisterForPush } from '../services/push';
 
 interface User {
   userId: string;
@@ -61,9 +62,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await AsyncStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
+
+    // Claim this device's push token for the account that just signed in.
+    // Deliberately not awaited — a slow or denied permission prompt shouldn't
+    // hold up navigation into the app.
+    registerForPush();
   };
 
   const logout = async () => {
+    // Stop push before the auth token goes away, since the call needs it.
+    await unregisterForPush();
+
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('user');
     setToken(null);

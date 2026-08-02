@@ -3,6 +3,7 @@ package com.stylebook.dto;
 import com.stylebook.entity.Booking;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -29,6 +30,22 @@ public class BookingDTO {
         private LocalTime bookingTime;
     }
 
+    /**
+     * Owner-supplied record of money collected at the shop.
+     *
+     * <p>Both fields are optional. Left blank, the amount defaults to the service's listed
+     * price and the method to cash, which covers the common case of the owner just tapping
+     * "Mark Paid" after a standard appointment.
+     */
+    @Data
+    public static class RecordPaymentRequest {
+        /** CASH, MOBILE_MONEY or CARD. Defaults to CASH. */
+        private String method;
+
+        /** Defaults to the service's listed price when omitted. */
+        private BigDecimal amount;
+    }
+
     @Data
     public static class BookingResponse {
         private String id;
@@ -48,6 +65,12 @@ public class BookingDTO {
         private boolean rescheduled;
         private String autoConfirmAt;
         private String createdAt;
+
+        // Payment
+        private String paymentStatus;
+        private String paymentMethod;
+        private BigDecimal amountPaid;
+        private String paidAt;
 
         public static BookingResponse from(Booking booking) {
             BookingResponse response = new BookingResponse();
@@ -71,6 +94,18 @@ public class BookingDTO {
             }
             response.setCreatedAt(booking.getCreatedAt() != null ?
                     booking.getCreatedAt().toString() : "");
+
+            response.setPaymentStatus(booking.getPaymentStatus() != null
+                    ? booking.getPaymentStatus().name()
+                    : Booking.PaymentStatus.UNPAID.name());
+            if (booking.getPaymentMethod() != null) {
+                response.setPaymentMethod(booking.getPaymentMethod().name());
+            }
+            response.setAmountPaid(booking.getAmountPaid());
+            if (booking.getPaidAt() != null) {
+                response.setPaidAt(booking.getPaidAt().toString());
+            }
+
             return response;
         }
     }

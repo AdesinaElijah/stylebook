@@ -81,6 +81,21 @@ export default function OwnerDashboardScreen({ navigation }: any) {
   const confirmedBookings = bookings.filter((b) => b.status === 'CONFIRMED');
   const recentBookings = bookings.slice(0, 3);
 
+  // Earnings come from payments the shop actually recorded, not from booked prices —
+  // a booking that was never paid for shouldn't inflate the number.
+  const paidBookings = bookings.filter((b) => b.paymentStatus === 'PAID');
+  const now = new Date();
+  const earnedThisMonth = paidBookings
+    .filter((b) => {
+      if (!b.paidAt) return false;
+      const paid = new Date(b.paidAt);
+      return paid.getMonth() === now.getMonth() && paid.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum, b) => sum + Number(b.amountPaid || 0), 0);
+  const awaitingPayment = bookings.filter(
+    (b) => b.paymentStatus !== 'PAID' && ['CONFIRMED', 'COMPLETED'].includes(b.status)
+  ).length;
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
@@ -128,6 +143,24 @@ export default function OwnerDashboardScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Earnings — from recorded payments only */}
+        <TouchableOpacity
+          style={[styles.earningsCard, { backgroundColor: theme.surface }]}
+          onPress={() => navigation.navigate('OwnerBookings')}
+        >
+          <Text style={[styles.earningsLabel, { color: theme.textSecondary }]}>
+            EARNED THIS MONTH
+          </Text>
+          <Text style={[styles.earningsValue, { color: theme.accent }]}>
+            GHS {earnedThisMonth.toFixed(2)}
+          </Text>
+          <Text style={[styles.earningsSub, { color: theme.textSecondary }]}>
+            {awaitingPayment > 0
+              ? `${awaitingPayment} booking${awaitingPayment > 1 ? 's' : ''} still to mark paid`
+              : 'All bookings settled'}
+          </Text>
+        </TouchableOpacity>
 
         {/* Stats 2x2 */}
         <View style={styles.statsGrid}>
@@ -271,6 +304,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', flexWrap: 'wrap', gap: 12,
     paddingHorizontal: 20, marginTop: 16,
   },
+  earningsCard: {
+    marginHorizontal: 20, marginTop: 16, borderRadius: 16, padding: 18,
+  },
+  earningsLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  earningsValue: { fontSize: 32, fontWeight: '900', marginTop: 6 },
+  earningsSub: { fontSize: 12, marginTop: 4 },
   statCard: {
     width: '47%', borderRadius: 16, padding: 16,
   },
