@@ -85,7 +85,7 @@ export default function OwnerBookingsScreen() {
       const name = payingFor.customerName;
       setPayingFor(null);
       loadBookings();
-      Alert.alert('Payment recorded', `${name} has been sent a receipt.`);
+      Alert.alert('Payment recorded', `${name} has been emailed a receipt and notified in the app.`);
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.error || 'Failed to record payment');
     } finally {

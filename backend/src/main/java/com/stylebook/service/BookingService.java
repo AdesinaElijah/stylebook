@@ -208,7 +208,8 @@ public class BookingService {
         booking.setUpdatedAt(LocalDateTime.now());
         bookingRepository.save(booking);
 
-        // Receipt goes to the customer — the owner already knows, they just took the money.
+        // In-app notification and push. Goes to the customer — the owner already knows,
+        // they just took the money.
         eventPublisher.publishEvent(new PaymentReceivedEvent(
                 booking.getCustomer().getId(),
                 booking.getId(),
@@ -217,7 +218,34 @@ public class BookingService {
                 amount.doubleValue()
         ));
 
+        // And a receipt by email, which is what people actually keep.
+        try {
+            emailService.sendPaymentReceiptEmail(
+                    booking.getCustomer().getEmail(),
+                    booking.getCustomer().getFullName(),
+                    booking.getShop().getName(),
+                    booking.getService().getName(),
+                    amount.toPlainString(),
+                    formatPaymentMethod(booking.getPaymentMethod()),
+                    booking.getPaidAt().toLocalDate().toString()
+            );
+        } catch (Exception e) {
+            // Never fail a genuinely collected payment because a receipt couldn't be sent.
+        }
+
         return BookingDTO.BookingResponse.from(booking);
+    }
+
+    /** MOBILE_MONEY -> "Mobile Money", for the receipt email. */
+    private String formatPaymentMethod(Booking.PaymentMethod method) {
+        if (method == null) return "Cash";
+        String[] words = method.name().split("_");
+        StringBuilder out = new StringBuilder();
+        for (String word : words) {
+            if (out.length() > 0) out.append(' ');
+            out.append(word.charAt(0)).append(word.substring(1).toLowerCase());
+        }
+        return out.toString();
     }
 
     /** Falls back to cash, which is what most Ghanaian salons still take. */
