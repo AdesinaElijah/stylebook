@@ -102,10 +102,16 @@ export default function ChatScreen({ route, navigation }: any) {
   );
 
   return (
-    <ThemedScreen>
+    // The bottom inset is left to the composer rather than the screen wrapper: with the
+    // keyboard open the home indicator is covered anyway, and insetting both double-spaces
+    // the input.
+    <ThemedScreen edges={['top']}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Android needs an explicit behavior. Passing undefined relies on the window
+        // resizing itself via adjustResize, which no longer happens under the edge-to-edge
+        // mode this app enables — so the keyboard simply covered the composer.
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {loading ? (
@@ -171,7 +177,7 @@ const styles = StyleSheet.create({
   bubbleTime: { fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
   composer: {
     flexDirection: 'row', alignItems: 'flex-end',
-    paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1,
+    paddingHorizontal: 12, paddingTop: 10, paddingBottom: 16, borderTopWidth: 1,
   },
   input: {
     flex: 1, borderRadius: 20, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10,

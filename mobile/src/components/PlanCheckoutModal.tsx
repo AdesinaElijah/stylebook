@@ -154,7 +154,9 @@ export default function PlanCheckoutModal({ visible, planName, price, onCancel, 
           number field and the Pay button entirely. */}
       <KeyboardAvoidingView
         style={styles.sheetWrap}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // 'height' on Android to match every other screen in the app. Undefined relies on
+        // the window resizing for the keyboard, which edge-to-edge mode prevents.
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         pointerEvents="box-none"
       >
       <View style={[styles.sheet, { backgroundColor: theme.surface }]}>
