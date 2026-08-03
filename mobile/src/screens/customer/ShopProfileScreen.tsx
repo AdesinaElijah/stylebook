@@ -62,6 +62,7 @@ export default function ShopProfileScreen({ route, navigation }: any) {
       navigation.navigate('Chat', {
         conversationId: res.data.id,
         title: shop?.name,
+        imageUrl: shop?.coverImageUrl,
       });
     } catch (error: any) {
       // GlobalExceptionHandler puts the real cause in `details` on a 500 and only a generic

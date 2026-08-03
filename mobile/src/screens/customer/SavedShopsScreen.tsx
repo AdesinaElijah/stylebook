@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Image,
   FlatList, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { shopsAPI } from '../../services/api';
@@ -42,13 +42,22 @@ export default function SavedShopsScreen({ navigation }: any) {
         style={styles.shopInfo}
         onPress={() => navigation.navigate('ShopProfile', { shopId: item.id })}
       >
-        <View style={[styles.shopIcon, { backgroundColor: theme.surfaceSecondary }]}>
-          <Text style={styles.shopIconText}>
-            {item.category === 'BARBERSHOP' ? '✂️' :
-             item.category === 'SALON' ? '💇' :
-             item.category === 'SPA' ? '🧖' : '💅'}
-          </Text>
-        </View>
+        {/* The shop's own photo when it has one; the category emoji is the fallback for
+            shops that haven't uploaded a cover yet. */}
+        {item.coverImageUrl ? (
+          <Image
+            source={{ uri: item.coverImageUrl }}
+            style={[styles.shopIcon, { backgroundColor: theme.surfaceSecondary }]}
+          />
+        ) : (
+          <View style={[styles.shopIcon, { backgroundColor: theme.surfaceSecondary }]}>
+            <Text style={styles.shopIconText}>
+              {item.category === 'BARBERSHOP' ? '✂️' :
+               item.category === 'SALON' ? '💇' :
+               item.category === 'SPA' ? '🧖' : '💅'}
+            </Text>
+          </View>
+        )}
         <View style={styles.shopDetails}>
           <Text style={[styles.shopName, { color: theme.text }]}>{item.name}</Text>
           <Text style={[styles.shopCategory, { color: theme.textSecondary }]}>

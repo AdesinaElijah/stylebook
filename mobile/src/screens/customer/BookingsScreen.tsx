@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Image,
   FlatList, ActivityIndicator, Alert, RefreshControl, Modal,
   ScrollView, TextInput,
 } from 'react-native';
@@ -236,6 +236,13 @@ export default function BookingsScreen({ navigation }: any) {
   const renderBooking = ({ item }: any) => (
     <View style={[styles.bookingCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.bookingHeader}>
+        {/* shopCoverImage has always been in the booking payload — it just wasn't read. */}
+        {item.shopCoverImage ? (
+          <Image
+            source={{ uri: item.shopCoverImage }}
+            style={[styles.shopThumb, { backgroundColor: theme.surfaceSecondary }]}
+          />
+        ) : null}
         <Text style={[styles.shopName, { color: theme.text }]}>{item.shopName}</Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '22' }]}>
           <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
@@ -440,6 +447,7 @@ const styles = StyleSheet.create({
   list: { padding: 20 },
   bookingCard: { borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1 },
   bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  shopThumb: { width: 34, height: 34, borderRadius: 8, marginRight: 10 },
   shopName: { fontSize: 16, fontWeight: '700', flex: 1 },
   statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   statusText: { fontSize: 11, fontWeight: '700' },
