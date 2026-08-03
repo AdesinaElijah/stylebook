@@ -4,7 +4,7 @@ A walkthrough of the whole system: what each layer does, how a request travels t
 how the pieces connect to each other.
 
 StyleBook is a two-sided salon and barbershop booking platform for Ghana. Customers discover
-shops, book appointments, review them and chat with them. Shop owners manage their profile,
+shops, book appointments and review them. Shop owners manage their profile,
 services, opening hours, bookings, posts and payments. Both sides use the same mobile app,
 which branches on the user's role at login.
 
@@ -87,7 +87,7 @@ calls it.
 
 **Events decouple features.** Booking code doesn't know notifications exist; it publishes
 `BookingRequestedEvent` and moves on. This is why the notification system could be extended
-to messaging and payments without touching booking logic.
+to payments without touching booking logic.
 
 ---
 
@@ -172,7 +172,6 @@ User (CUSTOMER | OWNER)
  │
  ├── books ─────────► Booking ────► Review     (one review per booking, enforced)
  ├── favourites ────► Favourite (User ↔ Shop)
- ├── chats ─────────► Conversation ────► Message
  └── receives ──────► Notification
                       NotificationPreferences  (one row per user)
                       UserDevice               (one row per signed-in device)
@@ -191,10 +190,6 @@ recalculates and writes them every time a review is created, so shop lists don't
 aggregate reviews on every read.
 
 **`posts.likeCount` is denormalised** the same way, maintained by `PostService.toggleLike`.
-
-**`conversations` carries `lastMessage`, `lastMessageAt`, `customerUnread`, `ownerUnread`.**
-Also denormalised, so the inbox renders from one query instead of one per thread. A unique
-constraint on `(customer_id, shop_id)` guarantees one thread per customer/shop pair.
 
 **`notifications.data` is a JSON column** holding whatever context the notification needs
 (`bookingId`, `shopName`, `amount`…). `notification_channels` is an `@ElementCollection` side
@@ -257,14 +252,13 @@ owner who's busy with a client doesn't cost the customer a confirmation.
 
 ### 5.2 Notifications — the shared spine
 
-Five things in the app produce notifications, and they all converge:
+Four things in the app produce notifications, and they all converge:
 
 ```
 BookingService ──► BookingRequestedEvent ─────┐
                ──► BookingStatusChangedEvent ─┤
-ReviewService  ──► ReviewCreatedEvent ────────┤
-PostService    ──► PostInteractionEvent ──────┼──► @EventListener
-MessagingService ► MessageCreatedEvent ───────┤    (5 listener classes)
+ReviewService  ──► ReviewCreatedEvent ────────┼──► @EventListener
+PostService    ──► PostInteractionEvent ──────┤    (4 listener classes)
 BookingService ──► PaymentReceivedEvent ──────┘         │
                                                         ▼
                                         NotificationService.createNotification()
@@ -287,31 +281,7 @@ Push goes through **Expo's push service**, not Firebase directly — Expo forwar
 APNs, so the backend holds no Google credentials. `UserDevice.fcmToken` stores an Expo token
 (`ExponentPushToken[…]`) despite the column name.
 
-### 5.3 Messaging
-
-```
-Customer taps 💬 Message on a shop profile
-    │  POST /api/messages/conversations {shopId}
-    │  → returns the existing thread, or creates one (idempotent)
-    ▼
-ChatScreen polls GET /api/messages/conversations/{id} every 5 seconds
-    │  (opening the thread also clears the caller's unread count)
-    ▼
-POST /api/messages/conversations/{id} {body}
-    ├─ Message saved
-    ├─ conversation.lastMessage / lastMessageAt updated, other side's unread +1
-    ├─ STOMP broadcast to /topic/conversations/{id}
-    └─ publish MessageCreatedEvent → the other party gets a notification + push
-```
-
-Every messaging method calls `requireMembership()` first, which loads the conversation and
-confirms the caller is either the customer or the shop's owner. Knowing a conversation ID is
-not authorisation.
-
-The app polls rather than subscribing to the STOMP broadcast, to avoid adding a WebSocket
-client dependency. Push notifications cover the case where the app isn't open.
-
-### 5.4 Media upload
+### 5.3 Media upload
 
 ```
 App picks an image (expo-image-picker) → multipart POST
@@ -377,11 +347,11 @@ isLoading ──► spinner
 !user ──────► Onboarding → RoleSelection → CustomerLogin / OwnerLogin
                         → VerifyEmail / ForgotPassword / ResetPassword
 
-user.role === 'CUSTOMER' ──► CustomerTabs  (Discover · Feed · Bookings · Messages · Profile)
-                             + ShopProfile, Booking, SavedShops, MyReviews, Settings, Chat
+user.role === 'CUSTOMER' ──► CustomerTabs  (Discover · Feed · Bookings · Profile)
+                             + ShopProfile, Booking, SavedShops, MyReviews, Settings
 
-user.role === 'OWNER' ─────► OwnerTabs     (Dashboard · Bookings · Messages · Profile · Settings)
-                             + CreatePost, OwnerReviews, OpeningHours, Chat
+user.role === 'OWNER' ─────► OwnerTabs     (Dashboard · Bookings · Profile · Settings)
+                             + CreatePost, OwnerReviews, OpeningHours
 ```
 
 Because the stacks are mounted conditionally, a customer build literally has no owner screens
@@ -407,7 +377,7 @@ deliberate flag and not a bug.
 
 `src/services/api.ts` is a single axios instance with a request interceptor that attaches the
 bearer token from AsyncStorage. Endpoints are grouped by domain — `authAPI`, `shopsAPI`,
-`bookingsAPI`, `reviewsAPI`, `postsAPI`, `promosAPI`, `notificationsAPI`, `messagesAPI` — so a
+`bookingsAPI`, `reviewsAPI`, `postsAPI`, `promosAPI`, `notificationsAPI` — so a
 screen imports only the group it needs.
 
 `src/services/push.ts` handles Expo push tokens: permission prompt, Android notification
@@ -466,16 +436,12 @@ POST   /api/promos/upload-image
 DELETE /api/promos/{promoId}
 ```
 
-### Notifications and messaging
+### Notifications
 ```
-GET    /api/notifications?userId=       GET    /api/messages/conversations
-GET    /api/notifications/unread-count  POST   /api/messages/conversations
-PATCH  /api/notifications/{id}/read     GET    /api/messages/conversations/{id}
-PATCH  /api/notifications/mark-all-read POST   /api/messages/conversations/{id}
-GET    /api/notifications/preferences   PATCH  /api/messages/conversations/{id}/read
-PUT    /api/notifications/preferences   GET    /api/messages/unread-count
-POST   /api/notifications/devices
-DELETE /api/notifications/devices
+GET    /api/notifications?userId=       GET    /api/notifications/preferences
+GET    /api/notifications/unread-count  PUT    /api/notifications/preferences
+PATCH  /api/notifications/{id}/read     POST   /api/notifications/devices
+PATCH  /api/notifications/mark-all-read DELETE /api/notifications/devices
 ```
 
 ---
