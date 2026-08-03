@@ -7,7 +7,10 @@ console.log('>>> API_BASE_URL IS:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  // 10s was too tight. A container that has been idle takes a few seconds to answer its
+  // first request, and image uploads over mobile data are slower still — both were
+  // timing out and surfacing as "Failed to save" on a request that would have succeeded.
+  timeout: 25000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -16,6 +19,27 @@ api.interceptors.request.use(async (config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // No error.response means the request never reached the server or never came back:
+    // a timeout, no signal, or the backend being unreachable. Screens all read
+    // error.response.data.error, so fill that in centrally rather than leaving each one
+    // to show its own vague fallback — "Failed to save" gave no hint it was the network.
+    if (!error.response) {
+      error.response = {
+        status: 0,
+        data: {
+          error: error.code === 'ECONNABORTED'
+            ? 'The server took too long to respond. Check your connection and try again.'
+            : 'Could not reach the server. Check your connection and try again.',
+        },
+      };
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authAPI = {
   registerCustomer: (data: any) => api.post('/auth/register/customer', data),

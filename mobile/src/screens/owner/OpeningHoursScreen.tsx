@@ -23,6 +23,9 @@ export default function OpeningHoursScreen({ navigation }: any) {
   const [saving, setSaving] = useState(false);
   const [hours, setHours] = useState<any>({});
 
+  /** Day whose times failed validation, so its row can be highlighted. */
+  const [invalidDay, setInvalidDay] = useState<string | null>(null);
+
   useEffect(() => { load(); }, []);
 
   const load = async () => {
@@ -55,6 +58,10 @@ export default function OpeningHoursScreen({ navigation }: any) {
       const d = hours[day.id];
       if (d.open) {
         if (!validTime(d.from) || !validTime(d.to)) {
+          // Naming the day in an alert isn't enough on a seven-day list — the offending
+          // row is usually scrolled out of sight. Flag it so the red border shows you
+          // which field to fix.
+          setInvalidDay(day.id);
           Alert.alert('Invalid time', day.label + ': use HH:MM format, e.g. 09:00');
           return;
         }
@@ -74,6 +81,8 @@ export default function OpeningHoursScreen({ navigation }: any) {
   };
 
   const updateDay = (dayId: string, patch: any) => {
+    // Editing the flagged day clears the highlight — the warning shouldn't outlive the fix.
+    setInvalidDay((current) => (current === dayId ? null : current));
     setHours((prev: any) => ({ ...prev, [dayId]: { ...prev[dayId], ...patch } }));
   };
 
@@ -99,8 +108,21 @@ export default function OpeningHoursScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scroll}>
         {DAYS.map((day) => {
           const d = hours[day.id] || { open: false, from: '09:00', to: '18:00' };
+          const flagged = invalidDay === day.id;
+          const fieldStyle = (value: string) => [
+            styles.timeInput,
+            { backgroundColor: theme.background, color: theme.text },
+            flagged && !validTime(value) && styles.timeInputInvalid,
+          ];
           return (
-            <View key={day.id} style={[styles.dayCard, { backgroundColor: theme.surface }]}>
+            <View
+              key={day.id}
+              style={[
+                styles.dayCard,
+                { backgroundColor: theme.surface },
+                flagged && styles.dayCardInvalid,
+              ]}
+            >
               <View style={styles.dayRow}>
                 <Text style={[styles.dayLabel, { color: theme.text }]}>{day.label}</Text>
                 <View style={styles.dayToggle}>
@@ -120,7 +142,7 @@ export default function OpeningHoursScreen({ navigation }: any) {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Opens</Text>
                     <TextInput
-                      style={[styles.timeInput, { backgroundColor: theme.background, color: theme.text }]}
+                      style={fieldStyle(d.from)}
                       value={d.from}
                       onChangeText={(v) => updateDay(day.id, { from: v })}
                       placeholder="09:00"
@@ -132,7 +154,7 @@ export default function OpeningHoursScreen({ navigation }: any) {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.timeLabel, { color: theme.textSecondary }]}>Closes</Text>
                     <TextInput
-                      style={[styles.timeInput, { backgroundColor: theme.background, color: theme.text }]}
+                      style={fieldStyle(d.to)}
                       value={d.to}
                       onChangeText={(v) => updateDay(day.id, { to: v })}
                       placeholder="18:00"
@@ -167,6 +189,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, marginTop: 6, lineHeight: 18 },
   scroll: { padding: 20, paddingTop: 12 },
   dayCard: { borderRadius: 16, padding: 14, marginBottom: 10 },
+  dayCardInvalid: { borderWidth: 1.5, borderColor: '#f44336' },
   dayRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   dayLabel: { fontSize: 16, fontWeight: '700' },
   dayToggle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -174,6 +197,7 @@ const styles = StyleSheet.create({
   timesRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, marginTop: 12 },
   timeLabel: { fontSize: 12, marginBottom: 6 },
   timeInput: { borderRadius: 10, padding: 12, fontSize: 15, textAlign: 'center' },
+  timeInputInvalid: { borderWidth: 1.5, borderColor: '#f44336' },
   timeDash: { fontSize: 16, paddingBottom: 14 },
   saveBtn: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 12 },
   saveBtnText: { color: '#000', fontSize: 15, fontWeight: '700' },
