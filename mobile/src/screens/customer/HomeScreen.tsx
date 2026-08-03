@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl,
@@ -47,6 +47,10 @@ export default function HomeScreen({ navigation }: any) {
   const [nearMe, setNearMe] = useState(false);
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [promos, setPromos] = useState<any[]>([]);
+
+  const scrollRef = useRef<ScrollView>(null);
+  /** Y position of the Discover Shops section, captured on layout so "See all" can jump to it. */
+  const discoverY = useRef(0);
   useEffect(() => {
     loadShops();
   }, [category, selectedCity, nearMe, userLoc]);
@@ -119,6 +123,23 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
   const featuredShops = shops.filter(s => s.plan === 'PRO' || s.plan === 'ENTERPRISE');
+
+  /**
+   * Both "See all" links land here. They were TouchableOpacity wrappers with no onPress
+   * at all — they looked tappable and did nothing.
+   *
+   * "See all" means show everything, so this drops whatever filters are narrowing the
+   * list and scrolls down to it. Tapping with no filters active still scrolls, so the
+   * press always produces a visible response rather than appearing dead.
+   */
+  const showAllShops = () => {
+    setSearch('');
+    setCategory('ALL');
+    setSelectedCity(CITIES[0]);
+    setNearMe(false);
+    scrollRef.current?.scrollTo({ y: Math.max(discoverY.current - 12, 0), animated: true });
+  };
+
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
@@ -157,6 +178,7 @@ export default function HomeScreen({ navigation }: any) {
         <NotificationBell navigation={navigation} />
       </View>
       <ScrollView
+        ref={scrollRef}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadShops(); }} tintColor={theme.accent} />}
         showsVerticalScrollIndicator={false}
       >
@@ -240,7 +262,7 @@ export default function HomeScreen({ navigation }: any) {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={[styles.sectionTitle, { color: theme.text }]}>🔥 Featured & Trending</Text>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={showAllShops} hitSlop={10}>
                     <Text style={[styles.seeAll, { color: theme.accent }]}>See all ›</Text>
                   </TouchableOpacity>
                 </View>
@@ -289,12 +311,15 @@ export default function HomeScreen({ navigation }: any) {
               </View>
             )}
             {/* Discover Shops */}
-            <View style={styles.section}>
+            <View
+              style={styles.section}
+              onLayout={(e) => { discoverY.current = e.nativeEvent.layout.y; }}
+            >
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>
                   {nearMe ? '🧭 Shops Near You' : '📍 Discover Shops'}
                 </Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={showAllShops} hitSlop={10}>
                   <Text style={[styles.seeAll, { color: theme.accent }]}>See all ›</Text>
                 </TouchableOpacity>
               </View>

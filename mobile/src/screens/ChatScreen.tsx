@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { messagesAPI, ChatMessage } from '../services/api';
@@ -19,7 +19,7 @@ const POLL_INTERVAL_MS = 5000;
  * notifications cover the case where the app isn't open.
  */
 export default function ChatScreen({ route, navigation }: any) {
-  const { conversationId, title } = route.params;
+  const { conversationId, title, imageUrl } = route.params;
   const { theme } = useTheme();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -28,9 +28,32 @@ export default function ChatScreen({ route, navigation }: any) {
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
+  // A custom headerTitle rather than a plain string, so the shop's photo sits beside its
+  // name the way a messaging app is expected to look. Falls back to the first letter for
+  // shops with no cover photo.
   useEffect(() => {
-    navigation.setOptions({ title: title || 'Chat' });
-  }, [navigation, title]);
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={styles.headerRow}>
+          {imageUrl ? (
+            <Image
+              source={{ uri: imageUrl }}
+              style={[styles.headerAvatar, { backgroundColor: theme.surfaceSecondary }]}
+            />
+          ) : (
+            <View style={[styles.headerAvatar, styles.headerAvatarFallback, { backgroundColor: theme.accent }]}>
+              <Text style={styles.headerAvatarLetter}>
+                {(title || '?').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
+            {title || 'Chat'}
+          </Text>
+        </View>
+      ),
+    });
+  }, [navigation, title, imageUrl, theme]);
 
   useEffect(() => {
     let active = true;
@@ -165,6 +188,11 @@ export default function ChatScreen({ route, navigation }: any) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  headerAvatar: { width: 32, height: 32, borderRadius: 16, marginRight: 10 },
+  headerAvatarFallback: { justifyContent: 'center', alignItems: 'center' },
+  headerAvatarLetter: { color: '#000', fontSize: 14, fontWeight: '800' },
+  headerTitle: { fontSize: 17, fontWeight: '800', maxWidth: 220 },
   loader: { marginTop: 40 },
   list: { padding: 16, paddingBottom: 8 },
   emptyWrap: { flexGrow: 1, justifyContent: 'center' },

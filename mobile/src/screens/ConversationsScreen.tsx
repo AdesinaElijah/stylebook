@@ -66,6 +66,7 @@ export default function ConversationsScreen({ navigation }: any) {
         navigation.navigate('Chat', {
           conversationId: item.id,
           title: item.otherPartyName,
+          imageUrl: item.otherPartyImageUrl,
         })
       }
     >
