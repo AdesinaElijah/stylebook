@@ -128,13 +128,6 @@ export default function SettingsScreen({ navigation }: any) {
           />
           <Row
             theme={theme}
-            label="Messages"
-            sub="New messages from shops you've booked"
-            value={prefs.messageEnabled}
-            onChange={(v: boolean) => updatePref('messageEnabled', v)}
-          />
-          <Row
-            theme={theme}
             label="Likes & Comments"
             sub="Activity on posts you interact with"
             value={prefs.socialEnabled}

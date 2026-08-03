@@ -81,20 +81,19 @@ export default function OwnerDashboardScreen({ navigation }: any) {
   const confirmedBookings = bookings.filter((b) => b.status === 'CONFIRMED');
   const recentBookings = bookings.slice(0, 3);
 
-  // Earnings come from payments the shop actually recorded, not from booked prices —
-  // a booking that was never paid for shouldn't inflate the number.
-  const paidBookings = bookings.filter((b) => b.paymentStatus === 'PAID');
+  // Revenue is totalled from completed bookings, so the figure appears without the owner
+  // having to record anything. The wording on screen says "Revenue", not "Earned", and
+  // that distinction is deliberate: a booking is marked COMPLETED once its end time has
+  // passed, which is not the same as knowing the customer turned up and paid. Calling
+  // booked revenue "earned" would overstate what the system actually knows.
   const now = new Date();
-  const earnedThisMonth = paidBookings
-    .filter((b) => {
-      if (!b.paidAt) return false;
-      const paid = new Date(b.paidAt);
-      return paid.getMonth() === now.getMonth() && paid.getFullYear() === now.getFullYear();
-    })
-    .reduce((sum, b) => sum + Number(b.amountPaid || 0), 0);
-  const awaitingPayment = bookings.filter(
-    (b) => b.paymentStatus !== 'PAID' && ['CONFIRMED', 'COMPLETED'].includes(b.status)
-  ).length;
+  const completedThisMonth = bookings.filter((b) => {
+    if (b.status !== 'COMPLETED' || !b.bookingDate) return false;
+    const date = new Date(b.bookingDate);
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  });
+  const revenueThisMonth = completedThisMonth
+    .reduce((sum, b) => sum + Number(b.amountPaid ?? b.servicePrice ?? 0), 0);
 
   if (loading) {
     return (
@@ -144,21 +143,21 @@ export default function OwnerDashboardScreen({ navigation }: any) {
           </TouchableOpacity>
         )}
 
-        {/* Earnings — from recorded payments only */}
+        {/* Revenue — totalled from completed bookings, no owner action required */}
         <TouchableOpacity
           style={[styles.earningsCard, { backgroundColor: theme.surface }]}
           onPress={() => navigation.navigate('OwnerBookings')}
         >
           <Text style={[styles.earningsLabel, { color: theme.textSecondary }]}>
-            EARNED THIS MONTH
+            REVENUE THIS MONTH
           </Text>
           <Text style={[styles.earningsValue, { color: theme.accent }]}>
-            GHS {earnedThisMonth.toFixed(2)}
+            GHS {revenueThisMonth.toFixed(2)}
           </Text>
           <Text style={[styles.earningsSub, { color: theme.textSecondary }]}>
-            {awaitingPayment > 0
-              ? `${awaitingPayment} booking${awaitingPayment > 1 ? 's' : ''} still to mark paid`
-              : 'All bookings settled'}
+            {completedThisMonth.length === 0
+              ? 'No completed bookings yet this month'
+              : `From ${completedThisMonth.length} completed booking${completedThisMonth.length > 1 ? 's' : ''}`}
           </Text>
         </TouchableOpacity>
 

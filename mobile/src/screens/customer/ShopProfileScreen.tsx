@@ -4,7 +4,7 @@ import {
   ScrollView, ActivityIndicator, Alert, Linking, Image,
   TextInput, RefreshControl, Modal, Share,
 } from 'react-native';
-import { shopsAPI, reviewsAPI, messagesAPI } from '../../services/api';
+import { shopsAPI, reviewsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemedScreen from '../../components/ThemedScreen';
@@ -49,28 +49,6 @@ export default function ShopProfileScreen({ route, navigation }: any) {
     } finally {
       setLoading(false);
       setRefreshing(false);
-    }
-  };
-
-  /**
-   * Opens the chat thread with this shop. Safe to tap repeatedly — the backend
-   * returns the existing conversation rather than starting a new one.
-   */
-  const openChat = async () => {
-    try {
-      const res = await messagesAPI.openConversation(shopId);
-      navigation.navigate('Chat', {
-        conversationId: res.data.id,
-        title: shop?.name,
-        imageUrl: shop?.coverImageUrl,
-      });
-    } catch (error: any) {
-      // GlobalExceptionHandler puts the real cause in `details` on a 500 and only a generic
-      // string in `error`. Show both, otherwise the useful half is silently discarded.
-      const data = error.response?.data;
-      const message = [data?.error, data?.details].filter(Boolean).join('\n\n');
-      console.log('openChat failed:', error.response?.status, data);
-      Alert.alert('Error', message || 'Could not open chat');
     }
   };
 
@@ -238,12 +216,6 @@ export default function ShopProfileScreen({ route, navigation }: any) {
                 <Text style={[styles.directionsBtnText, { color: theme.text }]}>📍 Get Directions</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity
-              style={[styles.messageBtn, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
-              onPress={openChat}
-            >
-              <Text style={[styles.directionsBtnText, { color: theme.text }]}>💬 Message</Text>
-            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.bookBtn, !isOpen && styles.bookBtnDisabled]}
               onPress={() => isOpen && navigation.navigate('Booking', { shop })}
@@ -437,7 +409,6 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
   directionsBtn: { flex: 1, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1 },
   directionsBtnText: { fontWeight: '600' },
-  messageBtn: { flex: 1, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1 },
   bookBtn: { flex: 1, backgroundColor: '#C9A84C', borderRadius: 12, padding: 14, alignItems: 'center' },
   bookBtnDisabled: { backgroundColor: '#888' },
   bookBtnText: { color: '#000', fontWeight: '700', fontSize: 15 },

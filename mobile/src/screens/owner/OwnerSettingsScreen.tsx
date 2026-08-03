@@ -187,13 +187,6 @@ export default function OwnerSettingsScreen() {
           />
           <Row
             theme={theme}
-            label="Messages"
-            sub="New messages from customers"
-            value={prefs.messageEnabled}
-            onChange={(v: boolean) => updatePref('messageEnabled', v)}
-          />
-          <Row
-            theme={theme}
             label="Post Activity"
             sub="Likes and comments on your posts"
             value={prefs.socialEnabled}

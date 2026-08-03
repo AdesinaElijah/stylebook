@@ -1,0 +1,23 @@
+Remove messaging, base revenue on completed bookings, tighten reviews
+
+Messaging is removed at the product owner's request. The backend half was
+self-contained, so it comes out as ten deleted files with no edits to anything
+that remains. NotificationType.NEW_MESSAGE and NotificationPreferences
+.messageEnabled are deliberately kept: existing notification rows reference the
+enum value, and dropping the column would mean a schema change for no benefit.
+
+Reviews now require a COMPLETED booking rather than merely CONFIRMED. Bookings
+auto-confirm 45 seconds after being made, so the previous rule allowed a
+customer to book and leave five stars a minute later having never attended.
+Requiring COMPLETED means the appointment time has at least passed. Attendance
+is still inferred from the clock rather than known — a real check-in step is
+the correct fix and is not built.
+
+The owner dashboard now totals completed bookings instead of recorded
+payments, so the figure appears without the owner having to mark anything. It
+is labelled "Revenue this month", not "Earned", because a booking is completed
+by elapsed time and that is not the same as knowing the customer turned up and
+paid. Mark Paid remains available for owners who want the payment method and
+the emailed receipt; it is simply no longer the source of the dashboard number.
+
+ARCHITECTURE.md updated to match.

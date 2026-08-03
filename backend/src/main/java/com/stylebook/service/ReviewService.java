@@ -48,8 +48,7 @@ public class ReviewService {
                     .findByCustomerOrderByBookingDateDescBookingTimeDesc(customer)
                     .stream()
                     .filter(b -> b.getShop().getId().equals(shopId))
-                    .filter(b -> b.getStatus() == Booking.BookingStatus.CONFIRMED ||
-                                 b.getStatus() == Booking.BookingStatus.COMPLETED)
+                    .filter(b -> b.getStatus() == Booking.BookingStatus.COMPLETED)
                     .filter(b -> !reviewRepository.existsByBookingId(b.getId()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException(
@@ -60,9 +59,17 @@ public class ReviewService {
             throw new RuntimeException("Unauthorized");
         }
 
-        if (booking.getStatus() != Booking.BookingStatus.CONFIRMED &&
-            booking.getStatus() != Booking.BookingStatus.COMPLETED) {
-            throw new RuntimeException("Can only review confirmed or completed bookings");
+        // COMPLETED only, deliberately. Accepting CONFIRMED let a customer review a shop
+        // they had never been to: bookings auto-confirm 45 seconds after being made, so
+        // "book, wait a minute, leave five stars" was a valid path. Requiring COMPLETED
+        // means the appointment time has at least passed.
+        //
+        // This still infers attendance from the clock rather than knowing it. A real
+        // check-in — the customer confirming arrival, or the owner marking it — is the
+        // correct fix and is not built.
+        if (booking.getStatus() != Booking.BookingStatus.COMPLETED) {
+            throw new RuntimeException(
+                    "You can review once your appointment time has passed");
         }
 
         if (reviewRepository.existsByBookingId(booking.getId())) {
