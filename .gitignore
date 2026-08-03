@@ -6,6 +6,19 @@ backend/target/
 mobile/.expo/
 mobile/dist/
 
+# Runtime uploads. The seeded demo images (n1.jpg … n24.jpg) are committed on purpose —
+# they get baked into the Docker image at build time and are what the demo shops display.
+# Files written by FileUploadService at runtime are UUID-named and must not be committed.
+backend/uploads/*-*-*-*-*.jpg
+backend/uploads/*-*-*-*-*.jpeg
+backend/uploads/*-*-*-*-*.png
+
+# Secrets
+.env
+.env.local
+*.env.local
+backend/src/main/resources/application-local.properties
+
 # Local env / IDE
 .vscode/
 .idea/
